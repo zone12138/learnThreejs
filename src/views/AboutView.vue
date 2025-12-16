@@ -12,20 +12,21 @@ import { useThreejsGUI } from '@/hooks/GUI'
 const aboutRef = ref(null)
 
 const scene = new THREE.Scene()
+// scene.background = new THREE.Color(0xffffff)
 
 const geometry = new THREE.BoxGeometry(2, 1, 1)
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true })
+const material = new THREE.MeshBasicMaterial({ wireframe: true, transparent: true })
 const mesh = new THREE.Mesh(geometry, material)
 // 将立方体位置设置在相机前方
 // mesh.position.set(0, 0, 5)
 // 将立方体添加到场景
 scene.add(mesh)
-
+// 透视摄像机
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 // 设置相机位置
 // camera.position.set(0, 0, 7)
 camera.position.z = 5
-// // 让相机看向立方体
+// 让相机看向立方体
 camera.lookAt(mesh.position)
 const cameraHelper = new THREE.CameraHelper(camera)
 scene.add(cameraHelper)
@@ -55,7 +56,7 @@ onMounted(() => {
   // 开始动画循环
   animate()
 
-  useThreejsGUI({ camera, mesh, material, cameraHelper, renderer, scene })
+  useThreejsGUI({ camera, mesh, cameraHelper, renderer, scene })
 })
 
 // 窗口大小调整函数
