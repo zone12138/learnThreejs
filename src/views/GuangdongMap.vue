@@ -52,7 +52,7 @@ const FLY_LINE_CONFIG = {
 const MAP_CONFIG = {
   projection: {
     center: [113.2, 23.3],
-    scale: 1500,
+    scale: 1000,
     translate: [0, 0],
   },
   colors: {
@@ -852,16 +852,11 @@ const calculateControlPoint = (start, end) => {
   const midY = (start.y + end.y) / 2
   const midZ = (start.z + end.z) / 2
 
-  // 计算距离，用于确定弧度高度
-  const distance = Math.sqrt(
-    Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2) + Math.pow(end.z - start.z, 2),
-  )
+  // 使用固定高度，确保所有飞线高度一致
+  const fixedHeight = 30 // 增加飞线高度，使弧度更大
 
-  // 计算弧度高度
-  const height = distance * FLY_LINE_CONFIG.animation.curvature
-
-  // 返回控制点，Z轴升高以产生弧度
-  return new THREE.Vector3(midX, midY, midZ + height)
+  // 返回控制点，Z轴升高固定高度
+  return new THREE.Vector3(midX, midY, midZ + fixedHeight)
 }
 
 // 创建飞线点
