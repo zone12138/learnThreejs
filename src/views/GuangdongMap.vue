@@ -20,6 +20,31 @@ let raycaster = null
 let mouse = new THREE.Vector2()
 let activeDistrict = null
 let labels = []
+let flyLines = []
+let flyLineGroup = null
+
+// 飞线配置 - 简化设计
+const FLY_LINE_CONFIG = {
+  startPoint: { x: 0, y: 0, z: 8 }, // 天河区中心点，将在加载地图后更新
+  line: {
+    color: 0x87CEEB, // 浅蓝色，更浅的颜色
+    opacity: 0.6, // 降低不透明度，让飞线更柔和
+    width: 1
+  },
+  animation: {
+    duration: 2000, // 飞线动画持续时间，缩短以加快流动
+    delay: 0, // 移除延迟，所有飞线同时开始
+    flowSpeed: 4.0, // 增加基础流动速度，让动画更快
+    curvature: 0.8 // 弧度系数，增大以增加弧度
+  },
+  flow: {
+    color: 0x00ffff, // 流动效果颜色
+    opacity: 1.0, // 流动效果透明度，增大以更明显
+    width: 2, // 流动效果宽度
+    dashSize: 0.1, // 缩短流动线段长度
+    gapSize: 0.9 // 调整间隔，确保每条飞线只有一个流动线段
+  }
+}
 
 // 地图配置
 const MAP_CONFIG = {
@@ -31,7 +56,7 @@ const MAP_CONFIG = {
   colors: {
     district: ['#0465BD', '#357bcb', '#3a7abd'],
     highlight: '#4fa5ff',
-    background: 'transparent'
+    background: 0x000000
   },
   extrusion: {
     depth: 6,
@@ -54,7 +79,7 @@ const initScene = () => {
 
   // 创建场景
   scene = new THREE.Scene()
-  scene.background = MAP_CONFIG.colors.background
+  scene.background = new THREE.Color(0x000000) // 设置为黑色背景
 
   // 创建相机
   const width = container.clientWidth
@@ -73,7 +98,7 @@ const initScene = () => {
   camera.lookAt(0, 0, 0)
 
   // 创建渲染器
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false }) // alpha设为false，使用背景色
   renderer.setSize(width, height)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.shadowMap.enabled = true
@@ -81,6 +106,7 @@ const initScene = () => {
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.25
   renderer.outputColorSpace = THREE.SRGBColorSpace
+  renderer.setClearColor(0x000000) // 设置渲染器清除颜色为黑色
   container.appendChild(renderer.domElement)
 
   // 创建轨道控制器
@@ -99,6 +125,10 @@ const initScene = () => {
 
   // 设置地面
   setupGround()
+
+  // 创建飞线组
+  flyLineGroup = new THREE.Object3D()
+  scene.add(flyLineGroup)
 
   // 加载地图数据
   loadMapData()
@@ -170,9 +200,28 @@ const loadMapData = () => {
     .translate(MAP_CONFIG.projection.translate)
 
   // 遍历广东省各地区
+  let tianheDistrict = null
+  const districts = []
+  
   guangdongData.features.forEach((feature, index) => {
-    createDistrict(feature, projection, index)
+    const district = createDistrict(feature, projection, index)
+    districts.push(district)
+    
+    // 找到天河区
+    if (feature.properties.name === '天河区') {
+      tianheDistrict = district
+    }
   })
+  
+  // 如果找到了天河区，创建飞线
+  if (tianheDistrict && tianheDistrict.userData._centroid) {
+    // 更新飞线起点
+    FLY_LINE_CONFIG.startPoint.x = tianheDistrict.userData._centroid[0]
+    FLY_LINE_CONFIG.startPoint.y = tianheDistrict.userData._centroid[1]
+    
+    // 创建飞线
+    createFlyLines(districts, projection)
+  }
 }
 
 // 创建单个地区
@@ -238,14 +287,19 @@ const createDistrict = (feature, projection, index) => {
     })
   })
 
-  // 添加地区名称标签
+  // 保存中心点坐标
   if (feature.properties.centroid) {
     const [x, y] = projection(feature.properties.centroid)
+    districtGroup.userData._centroid = [x, -y]
+    
+    // 添加地区名称标签
     createDistrictLabel(feature.properties.name, x, -y)
   }
 
   // 添加到地图组
   mapGroup.add(districtGroup)
+  
+  return districtGroup
 }
 
 // 创建地区标签
@@ -398,9 +452,235 @@ const animate = () => {
     controls.update()
   }
   
+  // 更新飞线动画
+  updateFlyLines()
+  
   if (renderer && scene && camera) {
     renderer.render(scene, camera)
   }
+}
+
+// 创建飞线
+const createFlyLines = (districts, projection) => {
+  // 清空现有的飞线
+  clearFlyLines()
+
+  // 天河区中心点
+  const startPoint = FLY_LINE_CONFIG.startPoint
+  
+  // 遍历所有地区，创建飞线
+  districts.forEach((district, index) => {
+    // 跳过天河区本身
+    if (district.userData.name === '天河区') return
+    
+    // 获取目标地区的中心点
+    if (!district.userData._centroid) return
+    
+    const endPoint = {
+      x: district.userData._centroid[0],
+      y: district.userData._centroid[1],
+      z: 8
+    }
+    
+    // 创建带弧度的飞线路径（贝塞尔曲线）
+    const controlPoint = calculateControlPoint(startPoint, endPoint)
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(startPoint.x, startPoint.y, startPoint.z),
+      controlPoint,
+      new THREE.Vector3(endPoint.x, endPoint.y, endPoint.z)
+    )
+    
+    // 生成曲线上的点
+    const points = curve.getPoints(50) // 50个点，使曲线更平滑
+    
+    // 创建飞线主体（浅色线段）
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: FLY_LINE_CONFIG.line.color,
+      opacity: FLY_LINE_CONFIG.line.opacity,
+      transparent: true,
+      linewidth: FLY_LINE_CONFIG.line.width
+    })
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    
+    // 创建流动效果飞线（使用ShaderMaterial实现更可靠的流动效果）
+    const flowGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    
+    // 计算曲线长度，用于流动效果
+    let lineLength = 0
+    for (let i = 1; i < points.length; i++) {
+      lineLength += points[i].distanceTo(points[i - 1])
+    }
+    
+    // 使用ShaderMaterial实现更可靠的流动效果
+    const vertexShader = `
+      attribute float lineDistance;
+      varying float vLineDistance;
+      
+      void main() {
+        vLineDistance = lineDistance;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `
+    
+    const fragmentShader = `
+      uniform vec3 color;
+      uniform float opacity;
+      uniform float time;
+      uniform float flowSpeed;
+      uniform float dashSize;
+      uniform float gapSize;
+      uniform float totalLength;
+      
+      varying float vLineDistance;
+      
+      void main() {
+        // 计算流动的虚线效果
+        float offset = mod(time * flowSpeed, dashSize + gapSize);
+        float modDistance = mod(vLineDistance - offset, dashSize + gapSize);
+        
+        // 判断是否在虚线段内
+        if (modDistance > dashSize) {
+          discard; // 间隙部分不渲染
+        }
+        
+        gl_FragColor = vec4(color, opacity);
+      }
+    `
+    
+    // 生成随机流动速度，范围：基础速度的0.5到1.5倍
+    const randomFlowSpeed = FLY_LINE_CONFIG.animation.flowSpeed * (0.5 + Math.random())
+    
+    // 创建流动材质
+    const flowMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        color: { value: new THREE.Color(FLY_LINE_CONFIG.flow.color) },
+        opacity: { value: FLY_LINE_CONFIG.flow.opacity },
+        time: { value: 0.0 }, // 时间参数，用于流动效果
+        flowSpeed: { value: randomFlowSpeed }, // 使用随机流动速度
+        dashSize: { value: lineLength * FLY_LINE_CONFIG.flow.dashSize },
+        gapSize: { value: lineLength * FLY_LINE_CONFIG.flow.gapSize },
+        totalLength: { value: lineLength }
+      },
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      transparent: true,
+      blending: THREE.AdditiveBlending
+    })
+    
+    const flowLine = new THREE.Line(flowGeometry, flowMaterial)
+    
+    // 为BufferGeometry手动添加lineDistance属性
+    const positions = flowGeometry.attributes.position.array
+    const lineDistances = new Float32Array(positions.length / 3)
+    
+    lineDistances[0] = 0
+    for (let i = 1; i < positions.length / 3; i++) {
+      const prevPoint = new THREE.Vector3(
+        positions[(i - 1) * 3],
+        positions[(i - 1) * 3 + 1],
+        positions[(i - 1) * 3 + 2]
+      )
+      const currPoint = new THREE.Vector3(
+        positions[i * 3],
+        positions[i * 3 + 1],
+        positions[i * 3 + 2]
+      )
+      lineDistances[i] = lineDistances[i - 1] + prevPoint.distanceTo(currPoint)
+    }
+    
+    // 添加lineDistance属性到几何体
+    flowGeometry.setAttribute('lineDistance', new THREE.BufferAttribute(lineDistances, 1))
+    
+    // 创建飞线动画数据 - 所有飞线同时开始
+    const flyLineData = {
+      line: line,
+      flowLine: flowLine,
+      curve: curve,
+      lineGeometry: lineGeometry,
+      flowGeometry: flowGeometry,
+      lineMaterial: lineMaterial,
+      flowMaterial: flowMaterial,
+      startTime: Date.now(), // 所有飞线使用相同的开始时间
+      duration: FLY_LINE_CONFIG.animation.duration,
+      progress: 0,
+      active: true, // 直接设置为active，立即开始动画
+      flowOffset: 0, // 流动偏移量
+      lineLength: lineLength // 保存曲线长度
+    }
+    
+    // 添加到飞线组
+    flyLineGroup.add(line)
+    flyLineGroup.add(flowLine)
+    flyLines.push(flyLineData)
+  })
+}
+
+// 计算贝塞尔曲线控制点
+const calculateControlPoint = (start, end) => {
+  // 计算中点
+  const midX = (start.x + end.x) / 2
+  const midY = (start.y + end.y) / 2
+  const midZ = (start.z + end.z) / 2
+  
+  // 计算距离，用于确定弧度高度
+  const distance = Math.sqrt(
+    Math.pow(end.x - start.x, 2) + 
+    Math.pow(end.y - start.y, 2) + 
+    Math.pow(end.z - start.z, 2)
+  )
+  
+  // 计算弧度高度
+  const height = distance * FLY_LINE_CONFIG.animation.curvature
+  
+  // 返回控制点，Z轴升高以产生弧度
+  return new THREE.Vector3(midX, midY, midZ + height)
+}
+
+// 创建飞线点
+const createFlyLinePoint = (position) => {
+  const geometry = new THREE.SphereGeometry(0.3, 16, 16)
+  const material = new THREE.MeshBasicMaterial({
+    color: FLY_LINE_CONFIG.color,
+    transparent: true,
+    opacity: FLY_LINE_CONFIG.opacity
+  })
+  const point = new THREE.Mesh(geometry, material)
+  point.position.copy(position)
+  return point
+}
+
+// 更新飞线动画
+const updateFlyLines = () => {
+  const now = Date.now()
+  
+  flyLines.forEach((flyLineData) => {
+    const { flowMaterial, startTime } = flyLineData
+    
+    // 直接更新所有飞线的动画，不需要active状态检查
+    // 使用时间差更新ShaderMaterial的time参数
+    const elapsed = now - startTime
+    
+    // 更新time uniform，驱动流动效果
+    // 使用秒为单位，让流动速度更可控
+    flowMaterial.uniforms.time.value = elapsed / 1000
+  })
+}
+
+// 清空飞线
+const clearFlyLines = () => {
+  flyLines.forEach(flyLineData => {
+    // 移除并清理飞线主体
+    flyLineGroup.remove(flyLineData.line)
+    flyLineData.lineGeometry.dispose()
+    flyLineData.lineMaterial.dispose()
+    
+    // 移除并清理流动飞线
+    flyLineGroup.remove(flyLineData.flowLine)
+    flyLineData.flowGeometry.dispose()
+    flyLineData.flowMaterial.dispose()
+  })
+  flyLines = []
 }
 
 // 清理资源
@@ -412,6 +692,13 @@ const cleanup = () => {
 
   // 移除事件监听
   removeEventListeners()
+
+  // 清理飞线
+  clearFlyLines()
+  if (flyLineGroup) {
+    scene.remove(flyLineGroup)
+    flyLineGroup = null
+  }
 
   // 清理标签
   labels.forEach(label => {
