@@ -204,7 +204,7 @@ const createChinaMapBase = () => {
   const projection = d3
     .geoMercator()
     .center(MAP_CONFIG.projection.center)
-    .scale(MAP_CONFIG.projection.scale * 0.8) // 稍小的比例尺，确保中国地图完整显示
+    .scale(MAP_CONFIG.projection.scale) // 稍小的比例尺，确保中国地图完整显示
     .translate(MAP_CONFIG.projection.translate)
 
   let featureCount = 0
