@@ -15,6 +15,7 @@ import HelloWorld from './components/HelloWorld.vue'
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/flyline">FlyLine</RouterLink>
         <RouterLink to="/guangdong-map">GuangdongMap</RouterLink>
+        <RouterLink to="/guangzhou-map">GuangzhouMap</RouterLink>
       </nav>
     </div>
   </header>
