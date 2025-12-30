@@ -35,6 +35,11 @@ const router = createRouter({
       name: 'guangzhou-map',
       component: () => import('../views/GuangzhouMap.vue'),
     },
+    {
+      path: '/guangzhou-map-by-hooks',
+      name: 'guangzhou-map-by-hooks',
+      component: () => import('../views/GuangzhouMapByHooks.vue'),
+    },
   ],
 })
 

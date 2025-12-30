@@ -615,7 +615,7 @@ const handleMouseMove = (event) => {
 
   // 恢复之前选中的地区颜色
   if (activeDistrict) {
-    activeDistrict.material.forEach((mat, index) => {
+    activeDistrict.material.forEach((mat) => {
       mat.color.set(activeDistrict.userData.originalColor)
     })
     activeDistrict = null
