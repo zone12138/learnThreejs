@@ -1,7 +1,9 @@
-import { ref, onMounted, toValue } from 'vue'
+import { ref, onMounted, onUnmounted, toValue } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import * as d3 from 'd3'
+
+const isNonEmptyArray = (arr) => Array.isArray(arr) && arr.length > 0
 
 const MAP_CONFIG = {
   scene: {
@@ -66,7 +68,10 @@ export function use3DMap({
   Object.assign(MAP_CONFIG, mapConfig)
 
   let scene, camera, renderer, controls, animationId
-  let groundMapGroup, mapGroup, containerRef
+  let groundMapGroup,
+    mapGroup,
+    containerRef,
+    cleanups = []
   // 初始化投影
   const projection = d3
     .geoMercator()
@@ -74,12 +79,10 @@ export function use3DMap({
     .scale(MAP_CONFIG.projection.scale)
     .translate(MAP_CONFIG.projection.translate)
 
-  const isNonEmptyArray = (arr) => Array.isArray(arr) && arr.length > 0
-
   // 初始化场景
   const initScene = () => {
     const container = containerRef
-    if (!container) return
+    if (!container) return console.error('地图容器不存在')
 
     // 初始化场景
     scene = new THREE.Scene()
@@ -135,21 +138,17 @@ export function use3DMap({
   // 初始化地面
   const setupGround = () => {
     // 检查是否有有效数据
-    if (!groundMapData || !isNonEmptyArray(groundMapData.features)) {
-      console.error('地面地图数据为空或无效')
-      return
-    }
-    console.log('地面地图数据', groundMapData)
+    if (!groundMapData || !isNonEmptyArray(groundMapData.features))
+      return console.error('地面地图数据为空或无效')
     groundMapGroup = createGroundMap(groundMapData, MAP_CONFIG.groundMap)
+    cleanups.push(() => cleanupMap(groundMapGroup))
   }
 
+  // 初始化3D地图
   const setup3DMap = () => {
-    if (!mapData || !isNonEmptyArray(mapData.features)) {
-      console.error('3D地图数据为空或无效')
-      return
-    }
-
+    if (!mapData || !isNonEmptyArray(mapData.features)) return console.error('3D地图数据为空或无效')
     mapGroup = createGroundMap(mapData, MAP_CONFIG.map)
+    cleanups.push(() => cleanupMap(mapGroup))
   }
 
   /**
@@ -162,7 +161,7 @@ export function use3DMap({
     // 初始化地图组
     const mapGroup = new THREE.Object3D()
     scene.add(mapGroup) // 将地图组添加到场景中
-    const invalidCoordsCount = []
+    const invalidCoordsCount = [] // 用于收集无效坐标信息
     const { extrudeOpts, colorList, drawOutline, lineOpts } = mapOpts
 
     // 遍历地图数据
@@ -175,21 +174,16 @@ export function use3DMap({
 
       coordinates.forEach((polygon) => {
         // 处理多边形和多多边形的坐标格式，MultiPolygon比Polygon多一层数组
-        if (geometryType === 'Polygon') {
-          polygon = [polygon]
-        }
+        if (geometryType === 'Polygon') polygon = [polygon]
+        // 遍历收集有效坐标
         polygon.forEach((ring) => {
-          // 收集有效坐标
           const validCoords = []
           ring.forEach((coord) => {
             try {
               const [x, y] = projection(coord)
-              if (!isNaN(x) && !isNaN(y)) {
-                validCoords.push([x, -y])
-              }
+              if (!isNaN(x) && !isNaN(y)) validCoords.push([x, -y])
             } catch (error) {
-              // 收集无效坐标
-              invalidCoordsCount.push({ geometryType, coord, cityName })
+              invalidCoordsCount.push({ geometryType, coord, cityName, errorMsg: error.message }) // 收集无效坐标
             }
           })
 
@@ -205,24 +199,16 @@ export function use3DMap({
                   shape.lineTo(coord[0], coord[1])
                 }
               })
-
               // 确保形状闭合
               shape.closePath()
-
               // 创建拉伸几何体
               const geometry = new THREE.ExtrudeGeometry(shape, extrudeOpts)
-
               // 计算几何体的边界框和球体，用于渲染优化
               geometry.computeBoundingBox()
               // 计算几何体的边界球体，用于渲染优化
               geometry.computeBoundingSphere()
-
               // 使用MeshBasicMaterial数组，完全不受光照影响，避免鳞片状反光
               const materials = [
-                // new THREE.MeshBasicMaterial({ color }), // 正面
-                // new THREE.MeshBasicMaterial({ color }), // 侧面
-                // new THREE.MeshBasicMaterial({ color }), // 顶面/底面
-
                 // 正面材质
                 new THREE.MeshStandardMaterial({
                   color: color,
@@ -273,11 +259,29 @@ export function use3DMap({
     return mapGroup
   }
 
+  // 清理函数，用于移除地图组和其所有子对象
+  const cleanupMap = (mapGroup) => {
+    console.log('cleanup mapGroup', mapGroup)
+    if (mapGroup) {
+      scene.remove(mapGroup)
+      mapGroup.traverse((child) => {
+        if (child.geometry) child.geometry.dispose()
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose())
+          } else {
+            child.material.dispose()
+          }
+        }
+      })
+    }
+  }
+
   // 动画循环
   const animate = () => {
     animationId = requestAnimationFrame(animate)
-    controls && controls.update() // 更新控制器
-    renderer && scene && camera && renderer.render(scene, camera) // 渲染场景
+    controls?.update() // 更新控制器
+    renderer?.render(scene, camera) // 渲染场景
   }
 
   // 设置光照系统
@@ -310,8 +314,39 @@ export function use3DMap({
   }
 
   onMounted(() => {
+    console.log('containerRef', containerRef)
+    console.time('initScene')
     containerRef = toValue(container)
     initScene()
+    console.timeEnd('initScene')
+  })
+
+  // 清理
+  const cleanup = () => {
+    animationId && cancelAnimationFrame(animationId)
+    cleanups.forEach((cleanup) => cleanup())
+
+    // 清理渲染器
+    if (renderer) {
+      renderer.dispose()
+      if (containerRef && renderer.domElement) {
+        containerRef.removeChild(renderer.domElement)
+      }
+    }
+
+    // 重置所有引用
+    groundMapGroup = null
+    mapGroup = null
+    scene = null
+    camera = null
+    renderer = null
+    controls = null
+
+    console.log(groundMapGroup, mapGroup)
+  }
+
+  onUnmounted(() => {
+    cleanup()
   })
 
   return {
@@ -321,5 +356,6 @@ export function use3DMap({
     controls,
     animationId,
     groundMapGroup,
+    cleanup,
   }
 }

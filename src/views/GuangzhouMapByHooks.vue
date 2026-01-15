@@ -5,28 +5,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { use3DMap } from '../hooks/3DMap.js'
 
 import gzMapData from '../geoJson/广州市.js'
-import groundMapData from '../geoJson/广东省.js'
-import chinaMapData from '../geoJson/中华人民共和国.js'
+// import groundMapData from '../geoJson/广东省.js'
 
 const containerRef = ref(null)
 const districtInfoRef = ref(null)
 
-const { scene, camera, renderer, controls } = use3DMap({
+console.log('aetup', containerRef.value)
+console.time('use3DMap')
+
+const { scene, camera, renderer, controls, cleanup } = use3DMap({
   container: containerRef,
   districtInfoRef,
   // groundMapData: chinaMapData,
-  groundMapData,
+  // groundMapData,
   mapData: gzMapData,
 })
 
 // 点击事件处理函数
 const handleClick = (event) => {
   console.log('点击事件', scene, camera, renderer, controls)
+  cleanup()
 }
+
+onMounted(() => {
+  console.timeEnd('use3DMap')
+})
 </script>
 
 <style scoped>
