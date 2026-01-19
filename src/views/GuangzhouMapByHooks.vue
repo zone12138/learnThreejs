@@ -28,7 +28,7 @@ const { scene, camera, renderer, controls, cleanup } = use3DMap({
 // 点击事件处理函数
 const handleClick = (event) => {
   console.log('点击事件', scene, camera, renderer, controls)
-  cleanup()
+  // cleanup()
 }
 
 onMounted(() => {
