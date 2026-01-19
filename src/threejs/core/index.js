@@ -10,7 +10,7 @@ export class Map3D extends EventEmitter {
     this.canvas = canvas
     this.scene = new Scene()
     this.sizes = new Size(this)
-    this.camera = new Camera(this)
+    this.camera = new Camera(this, opts.cameraOpts || {})
     this.renderer = new Renderer(this)
 
     this.sizes.onResize(() => {

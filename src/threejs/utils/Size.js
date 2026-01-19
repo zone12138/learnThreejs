@@ -16,7 +16,7 @@ export class Size extends EventEmitter {
   }
   windowResize() {
     this.init()
-    this.emit('resize', this.width, this.height)
+    this.emit('resize', this.width, this.height, this.pixelRatio)
   }
   onResize(callback) {
     this.on('resize', callback)
