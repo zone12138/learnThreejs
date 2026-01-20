@@ -1,6 +1,6 @@
 import { Vector3 } from 'three'
 
-export function getPosition(position) {
+export function getV3Position(position) {
   if (position instanceof Vector3) {
     return position
   } else if (

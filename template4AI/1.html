@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>广州 3D 地图 - 带加载动画</title>
+    <style>
+      body {
+        margin: 0;
+        background: #020914;
+        overflow: hidden;
+        font-family: 'Microsoft YaHei', sans-serif;
+      }
+
+      /* 加载遮罩层样式 */
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, #0a1931 0%, #000510 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        transition: opacity 0.8s ease;
+      }
+
+      .loader-content {
+        text-align: center;
+      }
+
+      .progress-container {
+        width: 300px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        margin-top: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(43, 145, 225, 0.5);
+      }
+
+      #progress-bar {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #2b91e1, #56ccf2);
+        transition: width 0.3s ease;
+      }
+
+      #progress-text {
+        color: #56ccf2;
+        font-size: 14px;
+        margin-top: 10px;
+        letter-spacing: 1px;
+      }
+
+      #info-label {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading-overlay">
+      <div class="loader-content">
+        <h2 style="color: white; margin: 0; font-weight: 300">正在数字化广州...</h2>
+        <div class="progress-container">
+          <div id="progress-bar"></div>
+        </div>
+        <div id="progress-text">初始化场景 0%</div>
+      </div>
+    </div>
+
+    <div id="info-label">数据来源：阿里云 DataV.GeoAtlas | 引擎：Three.js</div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+          "d3": "https://esm.sh/d3-geo@3"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from 'three'
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+      import * as d3 from 'd3'
+
+      // --- 1. 加载管理器 (LoadingManager) ---
+      const progressBar = document.getElementById('progress-bar')
+      const progressText = document.getElementById('progress-text')
+      const loadingOverlay = document.getElementById('loading-overlay')
+
+      const manager = new THREE.LoadingManager()
+
+      manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+        const progress = Math.round((itemsLoaded / itemsTotal) * 100)
+        progressBar.style.width = progress + '%'
+        progressText.innerText = `正在解析地理数据: ${progress}%`
+      }
+
+      manager.onLoad = () => {
+        progressText.innerText = '加载完成！正在开启 3D 世界...'
+        setTimeout(() => {
+          loadingOverlay.style.opacity = '0'
+          setTimeout(() => (loadingOverlay.style.display = 'none'), 800)
+        }, 500)
+      }
+
+      // --- 2. 初始化 Three.js 场景 ---
+      const scene = new THREE.Scene()
+      // 设置背景颜色和雾化效果，增加深邃感
+      scene.background = new THREE.Color(0x020914)
+      scene.fog = new THREE.Fog(0x020914, 200, 1000)
+
+      const camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        2000,
+      )
+      camera.position.set(0, -120, 180)
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true })
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setPixelRatio(window.devicePixelRatio) // 适配高分屏
+      document.body.appendChild(renderer.domElement)
+
+      const controls = new OrbitControls(camera, renderer.domElement)
+      controls.enableDamping = true // 开启阻尼效果，旋转更丝滑
+
+      // 灯光布置
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
+      scene.add(ambientLight)
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1)
+      dirLight.position.set(100, 100, 100)
+      scene.add(dirLight)
+
+      // --- 3. 地图投影与加载 ---
+      // 广州经纬度中心
+      const projection = d3.geoMercator().center([113.27, 23.13]).scale(8000).translate([0, 0])
+
+      const mapGroup = new THREE.Group()
+      scene.add(mapGroup)
+
+      // 使用 FileLoader 并绑定 LoadingManager
+      const fileLoader = new THREE.FileLoader(manager)
+      const GZ_GEO_URL = 'https://geo.datav.aliyun.com/areas_v3/bound/440100_full.json'
+
+      fileLoader.load(GZ_GEO_URL, (data) => {
+        const jsonData = JSON.parse(data)
+
+        jsonData.features.forEach((feature) => {
+          const province = new THREE.Group()
+          const coordinates = feature.geometry.coordinates
+          const color = new THREE.Color().setHSL(0.6, 0.8, Math.random() * 0.3 + 0.3) // 随机生成蓝色系颜色
+
+          coordinates.forEach((multiPolygon) => {
+            multiPolygon.forEach((polygon) => {
+              const shape = new THREE.Shape()
+              for (let i = 0; i < polygon.length; i++) {
+                const [x, y] = projection([polygon[i][0], polygon[i][1]])
+                if (i === 0) shape.moveTo(x, -y)
+                else shape.lineTo(x, -y)
+              }
+
+              // 挤压设置
+              const extrudeSettings = {
+                depth: 4,
+                bevelEnabled: true,
+                bevelThickness: 0.5,
+                bevelSize: 0.2,
+              }
+
+              const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+              const material = new THREE.MeshStandardMaterial({
+                color: color,
+                metalness: 0.6,
+                roughness: 0.2,
+                transparent: true,
+                opacity: 0.9,
+              })
+
+              const mesh = new THREE.Mesh(geometry, material)
+              province.add(mesh)
+
+              // 轮廓线
+              const edges = new THREE.EdgesGeometry(geometry)
+              const line = new THREE.LineSegments(
+                edges,
+                new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 }),
+              )
+              province.add(line)
+            })
+          })
+          mapGroup.add(province)
+        })
+      })
+
+      // --- 4. 动画与自适应 ---
+      function animate() {
+        requestAnimationFrame(animate)
+        controls.update()
+        // 让地图轻微旋转，增加动感
+        mapGroup.rotation.z += 0.001
+        renderer.render(scene, camera)
+      }
+      animate()
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight)
+      })
+    </script>
+  </body>
+</html>

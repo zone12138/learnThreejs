@@ -9,16 +9,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Map3D } from '@/threejs/core'
 import { Grid } from '@/threejs/components/Grid'
+import { Plane } from '@/threejs/components/Plane'
 
 const mapCanvas = ref(null)
-
+let map = null
 onMounted(() => {
-  const map = new Map3D(mapCanvas.value)
-  console.log(map)
-  const grid = new Grid(map, {
+  map = new Map3D(mapCanvas.value)
+  new Grid(map, {
     gridSize: 50,
     gridDivision: 20,
     gridColor: 0x1b4b70,
@@ -27,6 +27,10 @@ onMounted(() => {
     pointSize: 0.1,
     pointColor: 0x154d7d,
   })
+  new Plane(map)
+})
+onUnmounted(() => {
+  map?.destroy()
 })
 </script>
 

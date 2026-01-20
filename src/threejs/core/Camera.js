@@ -1,6 +1,6 @@
-import { PerspectiveCamera } from 'three'
+import { PerspectiveCamera, Vector3 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { getPosition } from '../utils/Position'
+import { getV3Position } from '../utils/Position'
 
 const CAMERA_DEFAULT_OPTS = {
   position: new Vector3(10, 10, 10),
@@ -8,8 +8,6 @@ const CAMERA_DEFAULT_OPTS = {
   near: 1,
   far: 10000,
 }
-
-export default CAMERA_DEFAULT_OPTS
 
 export class Camera {
   constructor({ sizes, scene, canvas }, opts = {}) {
@@ -23,7 +21,7 @@ export class Camera {
     const aspectRatio = this.sizes.width / this.sizes.height
     const { fov, near, far, position } = this.opts
     this.instance = new PerspectiveCamera(fov, aspectRatio, near, far)
-    this.instance.position.copy(getPosition(position))
+    this.instance.position.copy(getV3Position(position))
     this.scene.add(this.instance)
 
     this.controls = new OrbitControls(this.instance, this.canvas)
@@ -34,6 +32,9 @@ export class Camera {
     const aspectRatio = this.sizes.width / this.sizes.height
     this.instance.aspect = aspectRatio
     this.instance.updateProjectionMatrix()
+  }
+  update() {
+    this.controls.update()
   }
   destroy() {
     this.controls.dispose()
