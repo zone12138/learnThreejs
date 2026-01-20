@@ -10,7 +10,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { TextureLoader, DoubleSide, MeshBasicMaterial, AdditiveBlending } from 'three'
+import { TextureLoader, DoubleSide, MeshBasicMaterial, AdditiveBlending, Vector3, AxesHelper } from 'three'
 import { BasicThreejs } from '@/threejs/core'
 import { Grid } from '@/threejs/components/Grid'
 import { Plane } from '@/threejs/components/Plane'
@@ -24,6 +24,7 @@ let map = null,
 onMounted(() => {
   map = new BasicThreejs(mapCanvas.value)
   new Grid(map, {
+    position: new Vector3(-3, -3, -10),
     gridSize: 50,
     gridDivision: 20,
     gridColor: 0x1b4b70,
@@ -48,10 +49,21 @@ onMounted(() => {
   })
   plane1.instance.rotation.x = -Math.PI / 2
   plane1.instance.renderOrder = 6
-  // plane1.instance.scale.set(0, 0, 0)
-  new Map3D(map, {
-    data: map1Data,
-  })
+  // new Map3D(map, {
+  //   projection: {
+  //     center: [113.280637, 23.125178],
+  //     scale: 25,
+  //     translate: [0, 0],
+  //   },
+  //   position: new Vector3(0, 0, 0),
+  //   data: map1Data,
+  // })
+
+  const axesHelper = new AxesHelper(100)
+  map.scene.add(axesHelper)
+
+  // map.camera.instance.position.set(0, -100, 150)
+  // map.camera.instance.lookAt(0, 0, 0)
 })
 onUnmounted(() => {
   map?.destroy()

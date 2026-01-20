@@ -1,25 +1,16 @@
-import {
-  Vector3,
-  Vector2,
-  Group,
-  MeshBasicMaterial,
-  Shape,
-  ExtrudeGeometry,
-  Mesh,
-  Object3D,
-} from 'three'
+import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import { getMercatorProjection } from '@/utils/GeoProjection.js'
 
 const MAPD_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 0),
   projection: {
     center: [0, 0],
-    scale: 1,
+    scale: 100,
     translate: [0, 0],
   },
   renderOrder: 1,
   surfaceMaterial: new MeshBasicMaterial({
-    color: 0x18263b,
+    color: 0xff0000,
     transparent: true,
     opacity: 1,
   }),
@@ -48,7 +39,7 @@ export class Map3D {
     this.projection = getMercatorProjection(projection)
     this.group = new Group()
     this.group.renderOrder = renderOrder
-    this.group.position.copy(position)
+    // this.group.position.copy(position)
     this.createGroundMap()
   }
   createGroundMap() {
@@ -78,6 +69,10 @@ export class Map3D {
             }
           }
           const geometry = new ExtrudeGeometry(shape, extrudeOpts)
+          // 关键：将几何体的中心点移动到自身的中心，而不是留在坐标原点
+          geometry.computeBoundingBox()
+          geometry.computeBoundingSphere()
+          // geometry.center()
           const mesh = new Mesh(geometry, [surfaceMaterial, sideMaterial])
           object3D.add(mesh)
         })

@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { getV3Position } from '../utils/Position'
 
 const CAMERA_DEFAULT_OPTS = {
-  position: new Vector3(10, 10, 10),
+  position: new Vector3(0, 0, 5),
   fov: 45,
   near: 1,
   far: 10000,
