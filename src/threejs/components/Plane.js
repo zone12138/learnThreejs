@@ -6,7 +6,7 @@ const PLANE_DEFAULT_OPTS = {
   scale: 1,
   position: new Vector3(0, 0, 0),
   autoRotate: true,
-  rotateSpeed: 0.01,
+  rotateSpeed: 0.001,
   material: new MeshBasicMaterial({
     transparent: true,
     opacity: 1,

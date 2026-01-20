@@ -10,14 +10,19 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Map3D } from '@/threejs/core'
+import { TextureLoader, DoubleSide, MeshBasicMaterial, AdditiveBlending } from 'three'
+import { BasicThreejs } from '@/threejs/core'
 import { Grid } from '@/threejs/components/Grid'
 import { Plane } from '@/threejs/components/Plane'
+import image1 from '@/assets/textures/image.png'
+import { Map3D } from '@/threejs/components/Map3D'
+import map1Data from '@/geoJson/广东省.json'
 
 const mapCanvas = ref(null)
-let map = null
+let map = null,
+  loader = new TextureLoader()
 onMounted(() => {
-  map = new Map3D(mapCanvas.value)
+  map = new BasicThreejs(mapCanvas.value)
   new Grid(map, {
     gridSize: 50,
     gridDivision: 20,
@@ -27,7 +32,26 @@ onMounted(() => {
     pointSize: 0.1,
     pointColor: 0x154d7d,
   })
-  new Plane(map)
+  const plane1 = new Plane(map, {
+    width: 10,
+    scale: 1,
+    position: { x: 0, y: 0.8, z: 0 },
+    material: new MeshBasicMaterial({
+      map: loader.load(image1),
+      color: 0x48afff,
+      side: DoubleSide,
+      transparent: true,
+      opacity: 0.4,
+      depthTest: false,
+      blending: AdditiveBlending,
+    }),
+  })
+  plane1.instance.rotation.x = -Math.PI / 2
+  plane1.instance.renderOrder = 6
+  // plane1.instance.scale.set(0, 0, 0)
+  new Map3D(map, {
+    data: map1Data,
+  })
 })
 onUnmounted(() => {
   map?.destroy()

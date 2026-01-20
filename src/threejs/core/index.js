@@ -5,7 +5,7 @@ import { Camera } from './Camera'
 import { Renderer } from './Renderer'
 import { TickClock } from '../utils/TickClock'
 
-export class Map3D extends EventEmitter {
+export class BasicThreejs extends EventEmitter {
   constructor(canvas, opts = {}) {
     super()
     this.canvas = canvas

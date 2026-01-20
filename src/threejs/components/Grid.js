@@ -49,7 +49,6 @@ export class Grid {
     group.position.copy(this.opts.position)
     this.instance = group
     this.scene.add(group)
-    console.log(group, this.scene)
   }
   createGridHelper() {
     const { gridSize, gridDivision, gridColor } = this.opts
