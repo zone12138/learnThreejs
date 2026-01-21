@@ -1,6 +1,7 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
-import { getMercatorProjection } from '@/utils/GeoProjection.js'
+import { getMercatorProjection, getFeatureCenter } from '@/utils/GeoProjection.js'
 import { MapLine } from './MapLine.js'
+import { MapLabel } from './MapLabel.js'
 
 const MAPD_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 0),
@@ -32,6 +33,10 @@ const MAPD_DEFAULT_OPTS = {
     show: true,
     opts: {},
   },
+  mapLabel: {
+    show: true,
+    opts: {},
+  },
 }
 
 export class Map3D {
@@ -50,7 +55,7 @@ export class Map3D {
     this.createGroundMap()
   }
   createGroundMap() {
-    const { data, surfaceMaterial, sideMaterial, extrudeOpts } = this.opts
+    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel } = this.opts
     if (!data) {
       console.warn('data is null, create ground map failed')
       return
@@ -82,18 +87,32 @@ export class Map3D {
           const mesh = new Mesh(geometry, [surfaceMaterial, sideMaterial])
           object3D.add(mesh)
 
-          if (this.opts.mapLine.show) {
-            const mapLine = new MapLine(
+          if (mapLine.show) {
+            const line = new MapLine(
               {
                 projection: this.projection,
-                coordinates: coordinates.map((v) => [...v, this.opts.extrudeOpts.depth + 0.1]),
+                coordinates: coordinates.map((v) => [...v, extrudeOpts.depth + 0.1]),
               },
-              this.opts.mapLine.opts,
+              mapLine.opts,
             )
-            this.group.add(mapLine)
+            this.group.add(line)
           }
         })
       })
+
+      if (mapLabel.show) {
+        const center = getFeatureCenter(feature)
+        const [x, y] = this.projection(center)
+        const label = new MapLabel(
+          {
+            name: properties?.name ?? '',
+            position: [x, -y, extrudeOpts.depth + 0.2],
+          },
+          mapLabel.opts,
+        )
+        this.group.add(label)
+      }
+
       this.group.add(object3D)
     })
 
