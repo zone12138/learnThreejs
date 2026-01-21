@@ -2,7 +2,7 @@ import { CanvasTexture, SpriteMaterial, Sprite, Vector3, LinearFilter } from 'th
 import { getV3Position } from '../utils/Position'
 
 const MAPLABEL_DEFAULT_OPTS = {
-  fontSize: 6, // 字体大小
+  fontSize: 16, // 字体大小
   fontFamily: 'Arial', // 字体
   fontWeight: 'Bold', // 字重
   color: '#ffffff', // 文字颜色
@@ -10,7 +10,7 @@ const MAPLABEL_DEFAULT_OPTS = {
   borderColor: null, // 边框颜色 (可选)
   borderWidth: 2, // 边框宽度
   padding: [10, 20], // 内边距 [上下, 左右]
-  scale: 0.1, // 世界缩放比例 (将像素映射到3D世界的倍数)
+  scale: 0.016, // 世界缩放比例 (将像素映射到3D世界的倍数)
   offset: [0, 0, 0], // 相对位置偏移 (比如在坐标点上方一点显示)
   resolution: 4, // 清晰度倍数 (越高越清晰，但显存占用越大)
 }
