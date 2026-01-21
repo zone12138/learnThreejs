@@ -30,6 +30,8 @@ const GRID_DEFAULT_OPTS = {
     col: 200,
   },
   pointBlending: NormalBlending,
+  helper: false,
+  autoAddToScene: true,
 }
 
 export class Grid {
@@ -41,14 +43,16 @@ export class Grid {
   init() {
     const group = new Group()
     group.name = 'grid'
-    const gridHelper = this.createGridHelper()
+    if (this.opts.helper) {
+      const gridHelper = this.createGridHelper()
+      group.add(gridHelper)
+    }
     const shapeMesh = this.createShapes()
     const point = this.createPoint()
-    group.add(gridHelper, shapeMesh, point)
-    this.scene.add(group)
+    group.add(shapeMesh, point)
     group.position.copy(this.opts.position)
     this.instance = group
-    this.scene.add(group)
+    if (this.opts.autoAddToScene) this.scene?.add(group)
   }
   createGridHelper() {
     const { gridSize, gridDivision, gridColor } = this.opts

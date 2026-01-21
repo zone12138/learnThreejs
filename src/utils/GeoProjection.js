@@ -14,3 +14,10 @@ export function getMercatorProjection({
 } = PROJECTION_DEFAULT_CENTER) {
   return geoMercator().center(center).scale(scale).translate(translate)
 }
+
+export function getFeatureCenter(feature) {
+  const { properties, property } = feature
+  return (
+    properties?.centroid ?? properties?.center ?? property?.centroid ?? property?.center ?? [0, 0]
+  )
+}

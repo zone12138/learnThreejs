@@ -28,9 +28,9 @@ export class Plane {
     mesh.scale.set(scale, scale, scale)
     mesh.position.copy(getV3Position(position))
     this.instance = mesh
-    this.scene.add(mesh)
+    this.scene?.add(mesh)
 
-    this.tickClock.onTick(() => this.update())
+    this.tickClock?.onTick(() => this.update())
   }
   update() {
     if (this.opts.autoRotate) {

@@ -1,5 +1,6 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import { getMercatorProjection } from '@/utils/GeoProjection.js'
+import { MapLine } from './MapLine.js'
 
 const MAPD_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 0),
@@ -26,6 +27,11 @@ const MAPD_DEFAULT_OPTS = {
     bevelThickness: 0.1,
   },
   data: null,
+  autoAddToScene: true,
+  mapLine: {
+    show: true,
+    opts: {},
+  },
 }
 
 export class Map3D {
@@ -39,7 +45,8 @@ export class Map3D {
     this.projection = getMercatorProjection(projection)
     this.group = new Group()
     this.group.renderOrder = renderOrder
-    // this.group.position.copy(position)
+    this.group.position.copy(position)
+    this.instance = this.group
     this.createGroundMap()
   }
   createGroundMap() {
@@ -58,28 +65,38 @@ export class Map3D {
 
         multiPolygon?.forEach((polygon) => {
           const shape = new Shape()
+          const coordinates = []
           for (let i = 0; i < polygon.length; i++) {
             const [lng, lat] = polygon[i]
             if (!lng || !lat) return
             const [x, y] = this.projection(polygon[i])
             if (i === 0) {
               shape.moveTo(x, -y)
-            } else {
-              shape.lineTo(x, -y)
             }
+            shape.lineTo(x, -y)
+            coordinates.push([x, -y])
           }
           const geometry = new ExtrudeGeometry(shape, extrudeOpts)
-          // 关键：将几何体的中心点移动到自身的中心，而不是留在坐标原点
           geometry.computeBoundingBox()
           geometry.computeBoundingSphere()
-          // geometry.center()
           const mesh = new Mesh(geometry, [surfaceMaterial, sideMaterial])
           object3D.add(mesh)
+
+          if (this.opts.mapLine.show) {
+            const mapLine = new MapLine(
+              {
+                projection: this.projection,
+                coordinates: coordinates.map((v) => [...v, this.opts.extrudeOpts.depth + 0.1]),
+              },
+              this.opts.mapLine.opts,
+            )
+            this.group.add(mapLine)
+          }
         })
       })
       this.group.add(object3D)
     })
-    this.scene.add(this.group)
-    console.log(this.scene)
+
+    if (this.opts.autoAddToScene) this.scene?.add(this.group)
   }
 }

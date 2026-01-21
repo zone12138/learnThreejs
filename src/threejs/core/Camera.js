@@ -1,4 +1,4 @@
-import { PerspectiveCamera, Vector3 } from 'three'
+import { CameraHelper, PerspectiveCamera, Vector3 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { getV3Position } from '../utils/Position'
 
@@ -7,6 +7,7 @@ const CAMERA_DEFAULT_OPTS = {
   fov: 45,
   near: 1,
   far: 10000,
+  helper: false,
 }
 
 export class Camera {
@@ -23,6 +24,11 @@ export class Camera {
     this.instance = new PerspectiveCamera(fov, aspectRatio, near, far)
     this.instance.position.copy(getV3Position(position))
     this.scene.add(this.instance)
+
+    if (this.opts.helper) {
+      const helper = new CameraHelper(this.instance)
+      this.scene.add(helper)
+    }
 
     this.controls = new OrbitControls(this.instance, this.canvas)
     this.controls.enableDamping = true
