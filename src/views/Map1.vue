@@ -92,7 +92,6 @@ onMounted(() => {
     y: 10,
     z: 12,
     onUpdate: () => {
-      console.log(map.camera.instance.position)
       map.camera.update()
     },
   })
@@ -106,8 +105,6 @@ onMounted(() => {
     onComplete: () => {
       map3D.lineGroup.visible = true
       map3D.labelGroup.visible = true
-      console.log(map3D.lineGroup)
-      console.log(map3D.labelGroup)
     },
   })
 })

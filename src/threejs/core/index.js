@@ -1,19 +1,36 @@
-import { EventEmitter } from '@/utils/EventEmitter'
 import { Scene, Mesh } from 'three'
+import { InteractionManager } from 'three.interactive'
+import merge from 'lodash-es/merge'
+import { EventEmitter } from '@/utils/EventEmitter'
 import { Size } from '../utils/Size'
 import { Camera } from './Camera'
 import { Renderer } from './Renderer'
 import { TickClock } from '../utils/TickClock'
 
+const BASIC_DEFAULT_OPTS = {
+  cameraOpts: {},
+  useInteraction: true,
+}
+
 export class BasicThreejs extends EventEmitter {
   constructor(canvas, opts = {}) {
     super()
+    this.opts = merge({}, BASIC_DEFAULT_OPTS, opts)
     this.canvas = canvas
     this.scene = new Scene()
     this.sizes = new Size(this)
-    this.camera = new Camera(this, opts.cameraOpts || {})
+    this.camera = new Camera(this, this.opts.cameraOpts)
     this.renderer = new Renderer(this)
     this.tickClock = new TickClock()
+
+    this.interactionManager = null
+    if (this.opts.useInteraction) {
+      this.interactionManager = new InteractionManager(
+        this.renderer.instance,
+        this.camera.instance,
+        canvas,
+      )
+    }
 
     this.sizes.onResize(() => {
       this.camera.resize()
@@ -23,6 +40,7 @@ export class BasicThreejs extends EventEmitter {
     this.tickClock.onTick((...args) => {
       this.camera.update(...args)
       this.renderer.update(...args)
+      this.interactionManager?.update(...args)
     })
   }
   destroy() {
@@ -30,6 +48,7 @@ export class BasicThreejs extends EventEmitter {
     this.camera.destroy()
     this.renderer.destroy()
     this.tickClock.destroy()
+    this.interactionManager?.dispose()
     this.scene.traverse((child) => {
       if (child instanceof Mesh) {
         child.geometry.dispose()
@@ -49,5 +68,6 @@ export class BasicThreejs extends EventEmitter {
     this.tickClock = null
     this.sizes = null
     this.canvas = null
+    this.interactionManager = null
   }
 }

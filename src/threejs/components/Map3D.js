@@ -1,8 +1,11 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import merge from 'lodash-es/merge'
 import { getMercatorProjection, getFeatureCenter } from '@/utils/GeoProjection.js'
+import { createSideLayerMaterial } from '../utils/Meterial.js'
 import { MapLine } from './MapLine.js'
 import { MapLabel } from './MapLabel.js'
+
+const NAME = 'Map3D'
 
 const MAPD_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 0), // 地图3D位置
@@ -19,14 +22,10 @@ const MAPD_DEFAULT_OPTS = {
     opacity: 1, // 透明度
   }),
   // 地图边框材质
-  sideMaterial: new MeshBasicMaterial({
-    color: 0x07152b, // 地图边框颜色
-    transparent: true, // 是否透明
-    opacity: 1, // 透明度
-  }),
+  sideMaterial: null,
   // 地图拉伸选项(拉伸几何体)
   extrudeOpts: {
-    depth: 0.15, // 地图拉伸深度
+    depth: 0.25, // 地图拉伸深度
     bevelEnabled: true, // 是否开启边框
     bevelSegments: 1, // 地图拉伸分段数
     bevelThickness: 0.1, // 地图拉伸厚度
@@ -44,9 +43,13 @@ const MAPD_DEFAULT_OPTS = {
 }
 
 export class Map3D {
-  constructor({ scene }, opts = {}) {
+  constructor({ scene, interactionManager = null }, opts = {}) {
     this.scene = scene
+    this.interactionManager = interactionManager
     this.opts = merge({}, MAPD_DEFAULT_OPTS, opts)
+    if (!this.opts.sideMaterial)
+      this.opts.sideMaterial = createSideLayerMaterial({ depth: this.opts.extrudeOpts.depth })
+
     this.init()
     return {
       instance: this.group,
@@ -58,17 +61,22 @@ export class Map3D {
     const { projection, position, renderOrder } = this.opts
     this.projection = getMercatorProjection(projection)
     this.group = new Group()
-    this.labelGroup = new Group()
-    this.lineGroup = new Group()
-    this.labelGroup.renderOrder = renderOrder // 要保证label不被遮挡
-    this.group.add(this.labelGroup, this.lineGroup)
+    this.group.name = `${NAME}-Group`
     this.group.renderOrder = renderOrder
     this.group.position.copy(position)
+
+    this.labelGroup = new Group()
+    this.labelGroup.name = `${NAME}-LabelGroup`
+    this.labelGroup.renderOrder = renderOrder // 要保证label不被遮挡
+
+    this.lineGroup = new Group()
+    this.lineGroup.name = `${NAME}-LineGroup`
+
+    this.group.add(this.labelGroup, this.lineGroup)
     this.createGroundMap()
   }
   createGroundMap() {
-    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel, position } =
-      this.opts
+    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel } = this.opts
     if (!data) {
       console.warn('data is null, create ground map failed')
       return
@@ -98,7 +106,16 @@ export class Map3D {
           geometry.computeBoundingBox()
           geometry.computeBoundingSphere()
           const mesh = new Mesh(geometry, [surfaceMaterial, sideMaterial])
+          mesh.userData = Object.assign({}, properties)
           object3D.add(mesh)
+
+          if (this.interactionManager) {
+            this.interactionManager.add(mesh)
+            mesh.addEventListener('mouseover', (event) => {
+              console.log('mouseover', event)
+            })
+          }
+
           if (mapLine.show) {
             const line = new MapLine(
               {
