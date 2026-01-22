@@ -51,6 +51,7 @@ export class BasicThreejs extends EventEmitter {
     this.interactionManager?.dispose()
     this.scene.traverse((child) => {
       if (child instanceof Mesh) {
+        this.interactionManager?.remove(child)
         child.geometry.dispose()
         for (const key in child.material) {
           const value = child.material[key]

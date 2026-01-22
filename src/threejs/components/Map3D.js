@@ -112,7 +112,7 @@ export class Map3D {
           if (this.interactionManager) {
             this.interactionManager.add(mesh)
             mesh.addEventListener('mouseover', (event) => {
-              console.log('mouseover', event)
+              console.log('mouseover', properties)
             })
           }
 
