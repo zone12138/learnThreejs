@@ -1,61 +1,74 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
+import merge from 'lodash-es/merge'
 import { getMercatorProjection, getFeatureCenter } from '@/utils/GeoProjection.js'
 import { MapLine } from './MapLine.js'
 import { MapLabel } from './MapLabel.js'
 
 const MAPD_DEFAULT_OPTS = {
-  position: new Vector3(0, 0, 0),
+  position: new Vector3(0, 0, 0), // 地图3D位置
   projection: {
-    center: [0, 0],
-    scale: 100,
-    translate: [0, 0],
+    center: [0, 0], // 地图中心坐标
+    scale: 100, // 地图缩放比例
+    translate: [0, 0], // 地图平移坐标
   },
-  renderOrder: 1,
+  renderOrder: 1, // 地图渲染顺序
+  // 地图表面材质
   surfaceMaterial: new MeshBasicMaterial({
-    color: 0xff0000,
-    transparent: true,
-    opacity: 1,
+    color: 0xff0000, // 地图表面颜色
+    transparent: true, // 是否透明
+    opacity: 1, // 透明度
   }),
+  // 地图边框材质
   sideMaterial: new MeshBasicMaterial({
-    color: 0x07152b,
-    transparent: true,
-    opacity: 1,
+    color: 0x07152b, // 地图边框颜色
+    transparent: true, // 是否透明
+    opacity: 1, // 透明度
   }),
+  // 地图拉伸选项(拉伸几何体)
   extrudeOpts: {
-    depth: 0.1,
-    bevelEnabled: true,
-    bevelSegments: 1,
-    bevelThickness: 0.1,
+    depth: 0.15, // 地图拉伸深度
+    bevelEnabled: true, // 是否开启边框
+    bevelSegments: 1, // 地图拉伸分段数
+    bevelThickness: 0.1, // 地图拉伸厚度
   },
-  data: null,
-  autoAddToScene: true,
+  data: null, // 地图数据
+  autoAddToScene: true, // 是否自动添加到场景
   mapLine: {
-    show: true,
-    opts: {},
+    show: true, // 是否显示地图线
+    opts: {}, // 地图线选项
   },
   mapLabel: {
-    show: true,
-    opts: {},
+    show: true, // 是否显示地图标签
+    opts: {}, // 地图标签选项
   },
 }
 
 export class Map3D {
   constructor({ scene }, opts = {}) {
     this.scene = scene
-    this.opts = Object.assign({}, MAPD_DEFAULT_OPTS, opts)
+    this.opts = merge({}, MAPD_DEFAULT_OPTS, opts)
     this.init()
+    return {
+      instance: this.group,
+      labelGroup: this.labelGroup,
+      lineGroup: this.lineGroup,
+    }
   }
   init() {
     const { projection, position, renderOrder } = this.opts
     this.projection = getMercatorProjection(projection)
     this.group = new Group()
+    this.labelGroup = new Group()
+    this.lineGroup = new Group()
+    this.labelGroup.renderOrder = renderOrder // 要保证label不被遮挡
+    this.group.add(this.labelGroup, this.lineGroup)
     this.group.renderOrder = renderOrder
     this.group.position.copy(position)
-    this.instance = this.group
     this.createGroundMap()
   }
   createGroundMap() {
-    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel } = this.opts
+    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel, position } =
+      this.opts
     if (!data) {
       console.warn('data is null, create ground map failed')
       return
@@ -86,7 +99,6 @@ export class Map3D {
           geometry.computeBoundingSphere()
           const mesh = new Mesh(geometry, [surfaceMaterial, sideMaterial])
           object3D.add(mesh)
-
           if (mapLine.show) {
             const line = new MapLine(
               {
@@ -95,7 +107,7 @@ export class Map3D {
               },
               mapLine.opts,
             )
-            this.group.add(line)
+            this.lineGroup.add(line)
           }
         })
       })
@@ -106,11 +118,11 @@ export class Map3D {
         const label = new MapLabel(
           {
             name: properties?.name ?? '',
-            position: [x, -y, extrudeOpts.depth + 0.2],
+            position: [x, -y, extrudeOpts.depth + 0.3],
           },
           mapLabel.opts,
         )
-        this.group.add(label)
+        this.labelGroup.add(label)
       }
 
       this.group.add(object3D)

@@ -19,7 +19,7 @@ export class Plane {
     this.scene = scene
     this.tickClock = tickClock
     this.opts = Object.assign({}, PLANE_DEFAULT_OPTS, opts)
-    this.init()
+    return this.init()
   }
   init() {
     const { width, scale, material, position } = this.opts
@@ -31,6 +31,7 @@ export class Plane {
     this.scene?.add(mesh)
 
     this.tickClock?.onTick(() => this.update())
+    return mesh
   }
   update() {
     if (this.opts.autoRotate) {

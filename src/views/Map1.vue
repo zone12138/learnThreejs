@@ -17,6 +17,7 @@ import {
   AdditiveBlending,
   Vector3,
   AxesHelper,
+  Group,
 } from 'three'
 import { BasicThreejs } from '@/threejs/core'
 import { Grid } from '@/threejs/components/Grid'
@@ -24,6 +25,7 @@ import { Plane } from '@/threejs/components/Plane'
 import image1 from '@/assets/textures/image.png'
 import { Map3D } from '@/threejs/components/Map3D'
 import map1Data from '@/geoJson/广东省.json'
+import gsap from 'gsap'
 
 const mapCanvas = ref(null)
 let map = null,
@@ -32,7 +34,7 @@ onMounted(() => {
   map = new BasicThreejs(mapCanvas.value, {
     cameraOpts: {
       helper: true,
-      position: new Vector3(0, 10, 12),
+      // position: new Vector3(0, 10, 12),
     },
   })
   const grid = new Grid(map, {
@@ -44,7 +46,6 @@ onMounted(() => {
     pointSize: 0.1,
     pointColor: 0x154d7d,
   })
-  // grid.instance.rotation.x = -Math.PI / 1.45
   const plane1 = new Plane(map, {
     width: 10,
     scale: 1,
@@ -59,8 +60,9 @@ onMounted(() => {
       blending: AdditiveBlending,
     }),
   })
-  plane1.instance.rotation.x = -Math.PI / 2
-  plane1.instance.renderOrder = 6
+  plane1.rotation.x = -Math.PI / 2
+  plane1.renderOrder = 6
+
   const map3D = new Map3D(map, {
     projection: {
       center: [113.280637, 23.125178],
@@ -71,12 +73,43 @@ onMounted(() => {
     data: map1Data,
   })
   map3D.instance.rotation.x = -Math.PI / 2
+  map3D.instance.scale.set(1, 1, 0)
+  map3D.lineGroup.visible = false
+  map3D.labelGroup.visible = false
 
   const axesHelper = new AxesHelper(100)
   map.scene.add(axesHelper)
 
-  // map.camera.instance.position.set(0, -100, 150)
-  // map.camera.instance.lookAt(0, 0, 0)
+  const tl = gsap.timeline({
+    defaults: {
+      duration: 2.5,
+      ease: 'power2.out',
+    },
+  })
+
+  tl.to(map.camera.instance.position, {
+    x: 0,
+    y: 10,
+    z: 12,
+    onUpdate: () => {
+      console.log(map.camera.instance.position)
+      map.camera.update()
+    },
+  })
+
+  tl.to(map3D.instance.scale, {
+    duration: 1,
+    x: 1,
+    y: 1,
+    z: 1,
+    ease: 'circ.out',
+    onComplete: () => {
+      map3D.lineGroup.visible = true
+      map3D.labelGroup.visible = true
+      console.log(map3D.lineGroup)
+      console.log(map3D.labelGroup)
+    },
+  })
 })
 onUnmounted(() => {
   map?.destroy()

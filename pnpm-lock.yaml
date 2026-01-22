@@ -14,9 +14,15 @@ importers:
       d3:
         specifier: ^7.9.0
         version: 7.9.0
+      gsap:
+        specifier: ^3.14.2
+        version: 3.14.2
       lil-gui:
         specifier: ^0.21.0
         version: 0.21.0
+      lodash-es:
+        specifier: ^4.17.23
+        version: 4.17.23
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(vue@3.5.26)
@@ -615,6 +621,9 @@ packages:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
 
+  gsap@3.14.2:
+    resolution: {integrity: sha512-P8/mMxVLU7o4+55+1TCnQrPmgjPKnwkzkXOK1asnR9Jg2lna4tEY5qBJjMmAaOBDDZWtlRjBXjLa0w53G/uBLA==}
+
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
 
@@ -736,6 +745,9 @@ packages:
 
   lil-gui@0.21.0:
     resolution: {integrity: sha512-tpvxN7v1GvE/Tv+GRopfOp0W7fVEjF4PltkuX8vOCIfim22rD1ztvfkoEMcv9lzQeuNUSeIrUmUjBwmlW/oUew==}
+
+  lodash-es@4.17.23:
+    resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
@@ -1609,6 +1621,8 @@ snapshots:
 
   gensync@1.0.0-beta.2: {}
 
+  gsap@3.14.2: {}
+
   hookable@5.5.3: {}
 
   iconv-lite@0.6.3:
@@ -1687,6 +1701,8 @@ snapshots:
       lightningcss-win32-x64-msvc: 1.30.2
 
   lil-gui@0.21.0: {}
+
+  lodash-es@4.17.23: {}
 
   lru-cache@5.1.1:
     dependencies:

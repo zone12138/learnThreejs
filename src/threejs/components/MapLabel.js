@@ -1,5 +1,5 @@
 import { CanvasTexture, SpriteMaterial, Sprite, Vector3, LinearFilter } from 'three'
-import { getV3Position } from '../utils/Position'
+import { getV3Position } from '../utils/Position.js'
 
 const MAPLABEL_DEFAULT_OPTS = {
   fontSize: 16, // 字体大小
@@ -75,19 +75,16 @@ export class MapLabel {
     const material = new SpriteMaterial({
       map: texture,
       transparent: true,
-      depthTest: false, // 可选：如果你希望标签总是显示在物体前面，设为 false
+      depthTest: false,
       depthWrite: false,
     })
     const sprite = new Sprite(material)
-
-
-    console.log(this.position)
 
     // style.scale 控制整体大小。比如 rawWidth=100, scale=0.01, 那么在3D里宽就是 1
     sprite.scale.set(rawWidth * this.opts.scale, rawHeight * this.opts.scale, 1)
 
     // 设置位置 + 偏移量
-    sprite.position.set(...this.position).add(new Vector3(...this.opts.offset))
+    sprite.position.copy(getV3Position(this.position)).add(new Vector3(...this.opts.offset))
 
     canvas.remove()
 

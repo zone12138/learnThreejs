@@ -10,6 +10,12 @@ export function getV3Position(position) {
     typeof position.z === 'number'
   ) {
     return new Vector3(position.x, position.y, position.z)
+  } else if (
+    Array.isArray(position) &&
+    position.length === 3 &&
+    position.every((v) => typeof v === 'number')
+  ) {
+    return new Vector3(...position)
   } else {
     console.warn('position is not a valid position, default to (0, 0, 0)')
     return new Vector3(0, 0, 0)
