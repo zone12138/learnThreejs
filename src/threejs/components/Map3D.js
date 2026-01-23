@@ -1,9 +1,8 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import merge from 'lodash-es/merge'
-import { getMercatorProjection, getFeatureCenter } from '@/utils/GeoProjection.js'
-import { createSideLayerMaterial } from '../utils/Meterial.js'
-import { MapLine } from './MapLine.js'
-import { MapLabel } from './MapLabel.js'
+import { createSideLayerMaterial } from '../utils/index.js'
+import { MapLine, MapLabel } from './index.js'
+import { bindEvents, getFeatureCenter, getMercatorProjection } from '../libs/index'
 
 const NAME = 'Map3D'
 
@@ -111,9 +110,18 @@ export class Map3D {
 
           if (this.interactionManager) {
             this.interactionManager.add(mesh)
-            mesh.addEventListener('mouseover', (event) => {
+            const unbindOver = bindEvents(mesh, 'mouseover', (event) => {
               console.log('mouseover', properties)
             })
+            const unbindOut = bindEvents(mesh, 'mouseout', (event) => {
+              console.log('mouseout', properties)
+            })
+            // 手动加cleanup方法，去销毁几何体的一些非常规对象（比如解绑事件）
+            mesh.userData.cleanup = () => {
+              console.log('cleanup', properties)
+              unbindOver()
+              unbindOut()
+            }
           }
 
           if (mapLine.show) {
@@ -141,9 +149,8 @@ export class Map3D {
         )
         this.labelGroup.add(label)
       }
-
-      this.group.add(object3D)
     })
+    this.group.add(object3D)
 
     if (this.opts.autoAddToScene) this.scene?.add(this.group)
   }

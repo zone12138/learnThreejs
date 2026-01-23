@@ -5,6 +5,7 @@
 <template>
   <div class="map-container">
     <canvas ref="mapCanvas"></canvas>
+    <button @click="cleanup">cleanup</button>
   </div>
 </template>
 
@@ -20,10 +21,8 @@ import {
   Group,
 } from 'three'
 import { BasicThreejs } from '@/threejs/core'
-import { Grid } from '@/threejs/components/Grid'
-import { Plane } from '@/threejs/components/Plane'
 import image1 from '@/assets/textures/image.png'
-import { Map3D } from '@/threejs/components/Map3D'
+import { Grid, Map3D, Plane } from '@/threejs/components/index'
 import map1Data from '@/geoJson/广东省.json'
 import gsap from 'gsap'
 
@@ -111,11 +110,21 @@ onMounted(() => {
 onUnmounted(() => {
   map?.destroy()
 })
+
+const cleanup = () => {
+  map?.destroy()
+}
 </script>
 
 <style scoped>
 .map-container {
   width: 100%;
   height: 100%;
+}
+
+button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
 }
 </style>

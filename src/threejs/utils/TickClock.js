@@ -1,6 +1,5 @@
 import { Clock } from 'three'
-import { EventEmitter } from '@/utils/EventEmitter'
-import { rafFn } from '@/utils/RafFn'
+import { EventEmitter, rafFn } from '../libs/index'
 
 export class TickClock extends EventEmitter {
   constructor() {

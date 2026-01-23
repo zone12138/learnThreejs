@@ -1,4 +1,4 @@
-import { EventEmitter } from '@/utils/EventEmitter'
+import { EventEmitter } from '../libs/index'
 
 export class Size extends EventEmitter {
   constructor({ canvas }) {

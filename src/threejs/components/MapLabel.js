@@ -1,5 +1,5 @@
 import { CanvasTexture, SpriteMaterial, Sprite, Vector3, LinearFilter } from 'three'
-import { getV3Position } from '../utils/Position.js'
+import { getV3Position } from '../utils/index.js'
 
 const MAPLABEL_DEFAULT_OPTS = {
   fontSize: 16, // 字体大小

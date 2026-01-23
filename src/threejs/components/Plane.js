@@ -1,5 +1,5 @@
 import { Vector3, MeshBasicMaterial, PlaneGeometry, Mesh } from 'three'
-import { getV3Position } from '../utils/Position'
+import { getV3Position } from '../utils/index.js'
 
 const PLANE_DEFAULT_OPTS = {
   width: 10,

@@ -1,11 +1,10 @@
 import { Scene, Mesh } from 'three'
 import { InteractionManager } from 'three.interactive'
 import merge from 'lodash-es/merge'
-import { EventEmitter } from '@/utils/EventEmitter'
-import { Size } from '../utils/Size'
 import { Camera } from './Camera'
 import { Renderer } from './Renderer'
-import { TickClock } from '../utils/TickClock'
+import { TickClock, Size } from '../utils/index'
+import { EventEmitter } from '../libs/index'
 
 const BASIC_DEFAULT_OPTS = {
   cameraOpts: {},
@@ -52,6 +51,8 @@ export class BasicThreejs extends EventEmitter {
     this.scene.traverse((child) => {
       if (child instanceof Mesh) {
         this.interactionManager?.remove(child)
+        child.userData.cleanup?.()
+        child.userData.cleanup = null
         child.geometry.dispose()
         for (const key in child.material) {
           const value = child.material[key]

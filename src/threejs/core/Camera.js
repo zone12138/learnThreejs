@@ -1,6 +1,6 @@
 import { CameraHelper, PerspectiveCamera, Vector3 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { getV3Position } from '../utils/Position'
+import { getV3Position } from '../utils/index'
 
 const CAMERA_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 5),
