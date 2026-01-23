@@ -112,11 +112,15 @@ export class Map3D {
           if (this.interactionManager) {
             this.interactionManager.add(mesh)
             const unbindAll = bindEvents(
-              this.opts.eventList.map((v) => ({ target: mesh, ...v, args: [mesh, properties] })),
+              this.opts.eventList.map((v) => ({
+                target: mesh,
+                ...v,
+                opts: true,
+                args: [mesh, properties],
+              })),
             )
             // 手动加cleanup方法，去销毁几何体的一些非常规对象（比如解绑事件）
             mesh.userData.cleanup = () => {
-              console.log('cleanup', properties)
               unbindAll()
             }
           }
