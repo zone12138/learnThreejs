@@ -73,8 +73,9 @@ onMounted(() => {
     eventList: [
       {
         event: 'click',
-        callback: function () {
-          console.log('click arguments: ', arguments)
+        callback: function (e, mesh, properties) {
+          e.stopPropagation()
+          console.log('click arguments: ', e, mesh, properties)
         },
       },
     ],
