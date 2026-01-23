@@ -39,6 +39,7 @@ const MAPD_DEFAULT_OPTS = {
     show: true, // 是否显示地图标签
     opts: {}, // 地图标签选项
   },
+  eventList: [], // 事件监听
 }
 
 export class Map3D {
@@ -110,17 +111,13 @@ export class Map3D {
 
           if (this.interactionManager) {
             this.interactionManager.add(mesh)
-            const unbindOver = bindEvents(mesh, 'mouseover', (event) => {
-              console.log('mouseover', properties)
-            })
-            const unbindOut = bindEvents(mesh, 'mouseout', (event) => {
-              console.log('mouseout', properties)
-            })
+            const unbindAll = bindEvents(
+              this.opts.eventList.map((v) => ({ target: mesh, ...v, args: [mesh, properties] })),
+            )
             // 手动加cleanup方法，去销毁几何体的一些非常规对象（比如解绑事件）
             mesh.userData.cleanup = () => {
               console.log('cleanup', properties)
-              unbindOver()
-              unbindOut()
+              unbindAll()
             }
           }
 

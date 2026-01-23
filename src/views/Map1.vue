@@ -70,6 +70,14 @@ onMounted(() => {
     },
     position: new Vector3(0, 0.3, 0),
     data: map1Data,
+    eventList: [
+      {
+        event: 'click',
+        callback: function () {
+          console.log('click arguments: ', arguments)
+        },
+      },
+    ],
   })
   map3D.instance.rotation.x = -Math.PI / 2
   map3D.instance.scale.set(1, 1, 0)
