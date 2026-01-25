@@ -1,4 +1,4 @@
-import { DoubleSide, ShaderMaterial, Color } from 'three'
+import { DoubleSide, ShaderMaterial, Color, Material } from 'three'
 
 const SIDELAYER_DEFAULT_OPTS = {
   color1: 0x2a6e92,
@@ -62,5 +62,58 @@ export const createSideLayerMaterial = (opts) => {
         gl_FragColor = vec4(finalColor, alpha);
       }
     `,
+  })
+}
+
+/**
+ * 改变mesh的material
+ * @param {*} targetObject 网格/组
+ * @param {*} materialOrConfig 网格材质
+ * @param {*} cloneMaterial 是否克隆材质【因为如果其他mesh也使用了同一个材质（地址引用），不克隆的话，其他mesh的材质也会被改变】
+ */
+export const changeMeshMaterial = (targetObject, materialOrConfig, cloneMaterial = true) => {
+  if (!targetObject || !materialOrConfig) return
+  // 使用 traverse 递归遍历目标对象及其所有子对象
+  console.log('changeMeshMaterial', targetObject)
+  targetObject.traverse((child) => {
+    // 只处理 Mesh (网格)，忽略光源、相机或空 Group
+    if (child.isMesh) {
+      // 传入的是材质实例 (直接替换)
+      if (materialOrConfig.isMaterial) {
+        child.material = materialOrConfig
+      } else if (typeof materialOrConfig === 'object') {
+        // 传入的是配置对象 (修改现有材质属性)
+        // 如果 Mesh 有多个材质 (Array)，则遍历处理；如果是单个材质，直接处理
+        const isArrayMaterial = Array.isArray(child.material)
+        let materials = isArrayMaterial ? child.material : [child.material]
+        // 如果开启了克隆，我们需要先克隆一份出来
+        if (cloneMaterial) {
+          // 如果是材质数组，需要逐个克隆
+          if (isArrayMaterial) {
+            child.material = child.material.map((m) => m.clone())
+            materials = child.material // 更新引用指向新的克隆体
+          } else {
+            child.material = child.material.clone()
+            materials = [child.material] // 更新引用
+          }
+        }
+        materials.forEach((mat) => {
+          for (const key in materialOrConfig) {
+            const value = materialOrConfig[key]
+            // 特殊处理颜色 (Three.js 的 Color 对象建议用 set 方法)
+            if (key === 'color' && mat.color && mat.color.isColor) {
+              mat.color.set(value)
+            } else if (key === 'map' || key === 'alphaMap') {
+              // 特殊处理贴图 (如果传入的是 Texture 对象 - 贴图更新通常需要标记)
+              mat[key] = value
+              mat.needsUpdate = true
+            } else {
+              // 普通属性直接赋值 (如 opacity, transparent, wireframe)
+              mat[key] = value
+            }
+          }
+        })
+      }
+    }
   })
 }

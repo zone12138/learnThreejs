@@ -1,6 +1,6 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import merge from 'lodash-es/merge'
-import { createSideLayerMaterial } from '../utils/index.js'
+import { createSideLayerMaterial, changeMeshMaterial } from '../utils/index.js'
 import { MapLine, MapLabel } from './index.js'
 import { bindEvents, getFeatureCenter, getMercatorProjection } from '../libs/index'
 
@@ -123,12 +123,12 @@ export class Map3D {
             if (highLight) {
               unbindMouseOver = bindEvents(
                 mesh, 'mouseover', (e) => {
-                  this.changeMeshMaterial(e.target.parent, this.opts.highLightMaterial)
+                  changeMeshMaterial(e.target.parent, this.opts.highLightMaterial)
                 },
               )
               unbindMouseOut = bindEvents(
                 mesh, 'mouseout', (e) => {
-                  this.changeMeshMaterial(e.target.parent, surfaceMaterial)
+                  changeMeshMaterial(e.target.parent, surfaceMaterial)
                 },
               )
             }
@@ -168,20 +168,9 @@ export class Map3D {
         )
         this.labelGroup.add(label)
       }
-
+      console.log('createGroundMap', object3D)
       this.group.add(object3D)
     })
     if (this.opts.autoAddToScene) this.scene?.add(this.group)
-  }
-  /**
-   * 改变网格材质
-   * @param {*} group 组
-   * @param {Material} material 网格材质  
-   */
-  changeMeshMaterial(group, material) {
-    if (!group || !material) return
-    group?.traverse((child) => {
-      if (child.isMesh) child.material = material
-    })
   }
 }

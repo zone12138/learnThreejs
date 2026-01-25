@@ -20,11 +20,12 @@ import {
   AxesHelper,
   Group,
 } from 'three'
-import { BasicThreejs } from '@/threejs/core'
-import image1 from '@/assets/textures/image.png'
-import { Grid, Map3D, Plane } from '@/threejs/components/index'
-import map1Data from '@/geoJson/广东省.json'
 import gsap from 'gsap'
+import { BasicThreejs } from '@/threejs/core'
+import { Grid, Map3D, Plane } from '@/threejs/components/index'
+import { changeMeshMaterial } from '@/threejs/utils/index'
+import image1 from '@/assets/textures/image.png'
+import map1Data from '@/geoJson/广东省.json'
 
 const mapCanvas = ref(null)
 let map = null,
@@ -73,32 +74,25 @@ onMounted(() => {
     eventList: [
       {
         event: 'mouseover',
-        callback: function (e) {
-          e.stopPropagation()
-          e.target.parent.traverse((child) => {
-            if (child.isMesh) {
-              child.material = new MeshBasicMaterial({
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0.5,
-              })
-            }
+        callback: (e) => {
+          changeMeshMaterial(e.target.parent, {
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.5,
           })
         },
       },
       {
         event: 'mouseout',
-        callback: function (e) {
-          e.stopPropagation()
-          e.target.parent.traverse((child) => {
-            if (child.isMesh) {
-              child.material = new MeshBasicMaterial({
-                color: 0x48afff,
-                transparent: true,
-                opacity: 0.4,
-              })
-            }
-          })
+        callback: (e) => {
+          changeMeshMaterial(
+            e.target.parent,
+            new MeshBasicMaterial({
+              color: 0x48afff,
+              transparent: true,
+              opacity: 0.4,
+            }),
+          )
         },
       },
     ],
