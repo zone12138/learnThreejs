@@ -33,14 +33,13 @@ export function bindEvents(...args) {
     if (
       target &&
       typeof target.addEventListener === 'function' &&
-      event &&
+      typeof event === 'string' &&
       typeof callback === 'function' &&
       (opts instanceof Object || typeof opts === 'boolean')
     ) {
       const handler = function (e) {
         callback.apply(this, [e, ...args])
       }
-      console.log('opts', opts)
       // 绑定事件
       target.addEventListener(event, handler, opts)
       // 将对应的解绑逻辑推入数组

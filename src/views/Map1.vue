@@ -66,16 +66,39 @@ onMounted(() => {
     projection: {
       center: [113.280637, 23.125178],
       scale: 85,
-      translate: [0, 0],
     },
     position: new Vector3(0, 0.3, 0),
     data: map1Data,
+    highLight: false,
     eventList: [
       {
-        event: 'click',
-        callback: function (e, mesh, properties) {
+        event: 'mouseover',
+        callback: function (e) {
           e.stopPropagation()
-          console.log('click arguments: ', e, mesh, properties)
+          e.target.parent.traverse((child) => {
+            if (child.isMesh) {
+              child.material = new MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.5,
+              })
+            }
+          })
+        },
+      },
+      {
+        event: 'mouseout',
+        callback: function (e) {
+          e.stopPropagation()
+          e.target.parent.traverse((child) => {
+            if (child.isMesh) {
+              child.material = new MeshBasicMaterial({
+                color: 0x48afff,
+                transparent: true,
+                opacity: 0.4,
+              })
+            }
+          })
         },
       },
     ],

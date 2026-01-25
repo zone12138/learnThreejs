@@ -22,6 +22,13 @@ const MAPD_DEFAULT_OPTS = {
   }),
   // 地图边框材质
   sideMaterial: null,
+  highLight: true, // 是否使用默认高亮材质和事件
+  // 地图高亮材质
+  highLightMaterial: new MeshBasicMaterial({
+    color: 0xffffff, // 地图高亮颜色
+    transparent: true, // 是否透明
+    opacity: 0.5, // 透明度
+  }),
   // 地图拉伸选项(拉伸几何体)
   extrudeOpts: {
     depth: 0.25, // 地图拉伸深度
@@ -76,13 +83,13 @@ export class Map3D {
     this.createGroundMap()
   }
   createGroundMap() {
-    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel } = this.opts
+    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel , highLight } = this.opts
     if (!data) {
       console.warn('data is null, create ground map failed')
       return
     }
-    const object3D = new Object3D()
     data?.features?.forEach((feature) => {
+      const object3D = new Object3D()
       const { geometry, properties } = feature
       const { type, coordinates } = geometry ?? {}
 
@@ -91,16 +98,14 @@ export class Map3D {
 
         multiPolygon?.forEach((polygon) => {
           const shape = new Shape()
-          const coordinates = []
+          const lineCoordinates = []
           for (let i = 0; i < polygon.length; i++) {
             const [lng, lat] = polygon[i]
-            if (!lng || !lat) return
+            if (Number.isNaN(lng) || Number.isNaN(lat)) return
             const [x, y] = this.projection(polygon[i])
-            if (i === 0) {
-              shape.moveTo(x, -y)
-            }
+            if (i === 0) shape.moveTo(x, -y)
             shape.lineTo(x, -y)
-            coordinates.push([x, -y])
+            lineCoordinates.push([x, -y])
           }
           const geometry = new ExtrudeGeometry(shape, extrudeOpts)
           geometry.computeBoundingBox()
@@ -108,28 +113,41 @@ export class Map3D {
           const mesh = new Mesh(geometry, [surfaceMaterial, sideMaterial])
           mesh.userData = Object.assign({}, properties)
           object3D.add(mesh)
-
+          // 地图交互
           if (this.interactionManager) {
             this.interactionManager.add(mesh)
-            const unbindAll = bindEvents(
-              this.opts.eventList.map((v) => ({
-                target: mesh,
-                ...v,
-                opts: true,
-                args: [mesh, properties],
-              })),
+            let unbindAll = bindEvents(
+              this.opts.eventList.map((v) => ({ target: mesh, ...v, opts: true })),
             )
+            let unbindMouseOut = null, unbindMouseOver = null
+            if (highLight) {
+              unbindMouseOver = bindEvents(
+                mesh, 'mouseover', (e) => {
+                  this.changeMeshMaterial(e.target.parent, this.opts.highLightMaterial)
+                },
+              )
+              unbindMouseOut = bindEvents(
+                mesh, 'mouseout', (e) => {
+                  this.changeMeshMaterial(e.target.parent, surfaceMaterial)
+                },
+              )
+            }
             // 手动加cleanup方法，去销毁几何体的一些非常规对象（比如解绑事件）
             mesh.userData.cleanup = () => {
               unbindAll()
+              unbindMouseOver?.()
+              unbindMouseOut?.()
+              unbindAll = null
+              unbindMouseOver = null
+              unbindMouseOut = null
             }
           }
-
+          // 地图线
           if (mapLine.show) {
             const line = new MapLine(
               {
                 projection: this.projection,
-                coordinates: coordinates.map((v) => [...v, extrudeOpts.depth + 0.1]),
+                coordinates: lineCoordinates.map((v) => [...v, extrudeOpts.depth + 0.1]),
               },
               mapLine.opts,
             )
@@ -137,7 +155,7 @@ export class Map3D {
           }
         })
       })
-
+      // 地图标签
       if (mapLabel.show) {
         const center = getFeatureCenter(feature)
         const [x, y] = this.projection(center)
@@ -150,9 +168,20 @@ export class Map3D {
         )
         this.labelGroup.add(label)
       }
-    })
-    this.group.add(object3D)
 
+      this.group.add(object3D)
+    })
     if (this.opts.autoAddToScene) this.scene?.add(this.group)
+  }
+  /**
+   * 改变网格材质
+   * @param {*} group 组
+   * @param {Material} material 网格材质  
+   */
+  changeMeshMaterial(group, material) {
+    if (!group || !material) return
+    group?.traverse((child) => {
+      if (child.isMesh) child.material = material
+    })
   }
 }
