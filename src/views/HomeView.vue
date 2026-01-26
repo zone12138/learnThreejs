@@ -114,7 +114,7 @@ onMounted(() => {
       center: [113.280637, 23.125178],
       scale: 85,
     },
-    position: new Vector3(0, 0.3, 0),
+    position: new Vector3(0, 0.31, 0),
     data: mapChinaData,
   })
   map2D.instance.rotation.x = -Math.PI / 2

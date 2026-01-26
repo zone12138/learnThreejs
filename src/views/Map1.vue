@@ -77,14 +77,13 @@ onMounted(() => {
         callback: (e) => {
           changeMeshMaterial(
             e.target.parent,
-            {
-              color: 0xffffff,
-              transparent: true,
-              opacity: 0.5,
-            },
-            {
-              index: 0,
-            },
+            [
+              {
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.5,
+              },
+            ],
           )
         },
       },
@@ -107,7 +106,7 @@ onMounted(() => {
   map3D.instance.scale.set(1, 1, 0)
   map3D.lineGroup.visible = false
   map3D.labelGroup.visible = false
-
+  
   const axesHelper = new AxesHelper(100)
   map.scene.add(axesHelper)
 

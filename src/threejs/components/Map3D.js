@@ -15,7 +15,7 @@ const MAP3D_DEFAULT_OPTS = {
   renderOrder: 1, // 地图渲染顺序
   // 地图表面材质
   surfaceMaterial: new MeshBasicMaterial({
-    color: 0xff0000, // 地图表面颜色
+    color: 0x48afff, // 地图表面颜色
     transparent: true, // 是否透明
     opacity: 1, // 透明度
   }),
@@ -131,7 +131,6 @@ export class Map3D {
               unbindMouseOver = null
             if (highLight) {
               unbindMouseOver = bindEvents(mesh, 'mouseover', (e) => {
-                console.log(123456789)
                 changeMeshMaterial(e.target.parent, highLightMaterial, { index: 0 })
               })
               unbindMouseOut = bindEvents(mesh, 'mouseout', (e) => {

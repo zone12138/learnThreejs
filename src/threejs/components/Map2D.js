@@ -13,7 +13,7 @@ const MAP2D_DEFAULT_OPTS = {
     scale: 50,
     translate: [0, 0],
   },
-  renderOrder: 0, // 地图2D渲染顺序，用于解决渲染顺序问题，数值越大越靠前渲染
+  renderOrder: 2, // 地图2D渲染顺序，用于解决渲染顺序问题，数值越大越靠前渲染
   material: new MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 1 }), // 地图2D材质，用于渲染地图2D元素
   highLight: true, // 是否显示地图2D元素的高亮效果
   highLightMaterial: new MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }), // 地图2D元素的高亮材质，用于渲染地图2D元素的高亮效果
