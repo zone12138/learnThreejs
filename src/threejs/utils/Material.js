@@ -1,12 +1,16 @@
-import { DoubleSide, ShaderMaterial, Color, Material } from 'three'
+import { DoubleSide, ShaderMaterial, Color } from 'three'
 
 const SIDELAYER_DEFAULT_OPTS = {
-  color1: 0x2a6e92,
-  color2: 0x102736,
-  depth: 0.5,
-  lineCount: 12,
-  lineWidth: 0.05,
+  color1: 0x2a6e92, // 顶部颜色
+  color2: 0x102736, // 底部颜色
+  depth: 0.5, // 拉伸深度
+  lineCount: 12, // 线条数量
+  lineWidth: 0.05, // 线条宽度
 }
+/**
+ * 创建边框材质
+ * @param {*} opts 选项
+ */
 export const createSideLayerMaterial = (opts) => {
   const { color1, color2, depth, lineCount, lineWidth } = Object.assign(
     {},

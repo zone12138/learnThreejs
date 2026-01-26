@@ -41,7 +41,6 @@ header {
 /* 导航菜单 */
 nav {
   width: 100%;
-  text-align: center;
 }
 
 nav a {

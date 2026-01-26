@@ -1,11 +1,13 @@
-import { EventEmitter } from '../libs/index'
+import { EventEmitter, bindEvents } from '../libs/index'
 
 export class Size extends EventEmitter {
   constructor({ canvas }) {
     super()
     this.canvas = canvas
     this.init()
-    window.addEventListener('resize', this.windowResize)
+    this.unbindResize = bindEvents(window, 'resize', () => {
+      this.windowResize()
+    })
   }
   init() {
     this.width = this.canvas.parentElement.offsetWidth
@@ -23,6 +25,6 @@ export class Size extends EventEmitter {
   }
   destroy() {
     this.off('resize')
-    window.removeEventListener('resize', this.windowResize)
+    this.unbindResize?.()
   }
 }

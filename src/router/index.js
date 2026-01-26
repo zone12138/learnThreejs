@@ -6,40 +6,28 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      redirect: '/map1',
     },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
-    },
-    {
-      path: '/flyline',
-      name: 'flyline',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/FlyLine.vue'),
-    },
-    {
-      path: '/guangdong-map',
-      name: 'guangdong-map',
-      component: () => import('../views/GuangdongMap.vue'),
-    },
-    {
-      path: '/guangzhou-map',
-      name: 'guangzhou-map',
-      component: () => import('../views/GuangzhouMap.vue'),
-    },
-    {
-      path: '/guangzhou-map-by-hooks',
-      name: 'guangzhou-map-by-hooks',
-      component: () => import('../views/GuangzhouMapByHooks.vue'),
-    },
+    // {
+    //   path: '/flyline',
+    //   name: 'flyline',
+    //   component: () => import('../views/FlyLine.vue'),
+    // },
+    // {
+    //   path: '/guangdong-map',
+    //   name: 'guangdong-map',
+    //   component: () => import('../views/GuangdongMap.vue'),
+    // },
+    // {
+    //   path: '/guangzhou-map',
+    //   name: 'guangzhou-map',
+    //   component: () => import('../views/GuangzhouMap.vue'),
+    // },
+    // {
+    //   path: '/guangzhou-map-by-hooks',
+    //   name: 'guangzhou-map-by-hooks',
+    //   component: () => import('../views/GuangzhouMapByHooks.vue'),
+    // },
     {
       path: '/map1',
       name: 'map1',

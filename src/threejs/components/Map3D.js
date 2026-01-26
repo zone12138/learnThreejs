@@ -4,8 +4,7 @@ import { createSideLayerMaterial, changeMeshMaterial } from '../utils/index.js'
 import { MapLine, MapLabel } from './index.js'
 import { bindEvents, getFeatureCenter, getMercatorProjection } from '../libs/index'
 
-const NAME = 'Map3D'
-
+const NAME = 'Map3D' // 地图3D组件名称
 const MAPD_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 0), // 地图3D位置
   projection: {
@@ -83,11 +82,10 @@ export class Map3D {
     this.createGroundMap()
   }
   createGroundMap() {
-    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel , highLight } = this.opts
-    if (!data) {
-      console.warn('data is null, create ground map failed')
-      return
-    }
+    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel, highLight } =
+      this.opts
+    if (!data) return console.warn('data is null, create ground map failed')
+
     data?.features?.forEach((feature) => {
       const object3D = new Object3D()
       const { geometry, properties } = feature
@@ -119,18 +117,15 @@ export class Map3D {
             let unbindAll = bindEvents(
               this.opts.eventList.map((v) => ({ target: mesh, ...v, opts: true })),
             )
-            let unbindMouseOut = null, unbindMouseOver = null
+            let unbindMouseOut = null,
+              unbindMouseOver = null
             if (highLight) {
-              unbindMouseOver = bindEvents(
-                mesh, 'mouseover', (e) => {
-                  changeMeshMaterial(e.target.parent, this.opts.highLightMaterial)
-                },
-              )
-              unbindMouseOut = bindEvents(
-                mesh, 'mouseout', (e) => {
-                  changeMeshMaterial(e.target.parent, surfaceMaterial)
-                },
-              )
+              unbindMouseOver = bindEvents(mesh, 'mouseover', (e) => {
+                changeMeshMaterial(e.target.parent, this.opts.highLightMaterial)
+              })
+              unbindMouseOut = bindEvents(mesh, 'mouseout', (e) => {
+                changeMeshMaterial(e.target.parent, surfaceMaterial)
+              })
             }
             // 手动加cleanup方法，去销毁几何体的一些非常规对象（比如解绑事件）
             mesh.userData.cleanup = () => {
@@ -168,7 +163,6 @@ export class Map3D {
         )
         this.labelGroup.add(label)
       }
-      console.log('createGroundMap', object3D)
       this.group.add(object3D)
     })
     if (this.opts.autoAddToScene) this.scene?.add(this.group)

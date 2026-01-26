@@ -261,7 +261,6 @@ export function use3DMap({
 
   // 清理函数，用于移除地图组和其所有子对象
   const cleanupMap = (mapGroup) => {
-    console.log('cleanup mapGroup', mapGroup)
     if (mapGroup) {
       scene.remove(mapGroup)
       mapGroup.traverse((child) => {

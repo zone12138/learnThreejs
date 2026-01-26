@@ -1,6 +1,11 @@
 import { Vector3 } from 'three'
 
-export function getV3Position(position) {
+/**
+ * 获取Vector3位置
+ * @param {*} position 位置
+ * @returns {Vector3} Vector3位置
+ */
+export const getV3Position = (position) => {
   if (position instanceof Vector3) {
     return position
   } else if (
