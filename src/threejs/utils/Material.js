@@ -69,12 +69,13 @@ export const createSideLayerMaterial = (opts) => {
  * 改变mesh的material
  * @param {*} targetObject 网格/组
  * @param {*} materialOrConfig 网格材质
- * @param {*} cloneMaterial 是否克隆材质【因为如果其他mesh也使用了同一个材质（地址引用），不克隆的话，其他mesh的材质也会被改变】
+ * @param {*} opts.cloneMaterial 是否克隆材质【如果场景中其他mesh也使用了同一个材质（地址引用），不克隆的话，其他mesh的材质也会被改变】
+ * @param {Number | 'all' | Array<Number>} opts.index 素材索引【如果网格有多个材质，指定要修改的材质索引】
  */
-export const changeMeshMaterial = (targetObject, materialOrConfig, cloneMaterial = true) => {
+export const changeMeshMaterial = (targetObject, materialOrConfig, opts = {}) => {
   if (!targetObject || !materialOrConfig) return
-  // 使用 traverse 递归遍历目标对象及其所有子对象
-  console.log('changeMeshMaterial', targetObject)
+  const { cloneMaterial = true, index = 'all' } = opts
+  // 使用 traverse 递归遍历目标对象及其所有子对象（包括自身以及子组）
   targetObject.traverse((child) => {
     // 只处理 Mesh (网格)，忽略光源、相机或空 Group
     if (child.isMesh) {
@@ -85,19 +86,25 @@ export const changeMeshMaterial = (targetObject, materialOrConfig, cloneMaterial
         // 传入的是配置对象 (修改现有材质属性)
         // 如果 Mesh 有多个材质 (Array)，则遍历处理；如果是单个材质，直接处理
         const isArrayMaterial = Array.isArray(child.material)
-        let materials = isArrayMaterial ? child.material : [child.material]
-        // 如果开启了克隆，我们需要先克隆一份出来
+        let materials = []
         if (cloneMaterial) {
-          // 如果是材质数组，需要逐个克隆
-          if (isArrayMaterial) {
-            child.material = child.material.map((m) => m.clone())
-            materials = child.material // 更新引用指向新的克隆体
-          } else {
-            child.material = child.material.clone()
-            materials = [child.material] // 更新引用
-          }
+          // 更新引用指向新的克隆体
+          child.material = isArrayMaterial
+            ? child.material.map((m) => m.clone())
+            : child.material.clone()
         }
-        materials.forEach((mat) => {
+        materials = isArrayMaterial ? child.material : [child.material]
+        // 处理可选参数 index，处理数组、字符串、数字等不同情况
+        let changeIndexList = []
+        if (index === 'all') {
+          changeIndexList = Array.from({ length: materials.length }, (_, i) => i)
+        } else if (Array.isArray(index)) {
+          changeIndexList = index.map((v) => Number(v))
+        } else if (typeof index === 'number') {
+          changeIndexList = [index]
+        }
+        materials.forEach((mat, i) => {
+          if (!changeIndexList.includes(i)) return
           for (const key in materialOrConfig) {
             const value = materialOrConfig[key]
             // 特殊处理颜色 (Three.js 的 Color 对象建议用 set 方法)

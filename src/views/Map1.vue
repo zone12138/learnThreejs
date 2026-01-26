@@ -75,11 +75,17 @@ onMounted(() => {
       {
         event: 'mouseover',
         callback: (e) => {
-          changeMeshMaterial(e.target.parent, {
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.5,
-          })
+          changeMeshMaterial(
+            e.target.parent,
+            {
+              color: 0xffffff,
+              transparent: true,
+              opacity: 0.5,
+            },
+            {
+              index: 0,
+            },
+          )
         },
       },
       {
