@@ -107,6 +107,7 @@ export const changeMeshMaterial = (targetObject, materialOrConfig, opts = {}) =>
         } else if (typeof index === 'number') {
           changeIndexList = [index]
         }
+        console.log(changeIndexList)
         materials.forEach((mat, i) => {
           if (!changeIndexList.includes(i)) return
           for (const key in materialOrConfig) {

@@ -1,11 +1,11 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import merge from 'lodash-es/merge'
-import { createSideLayerMaterial, changeMeshMaterial } from '../utils/index.js'
+import { createSideLayerMaterial, changeMeshMaterial, getV3Position } from '../utils/index.js'
 import { MapLine, MapLabel } from './index.js'
 import { bindEvents, getFeatureCenter, getMercatorProjection } from '../libs/index'
 
 const NAME = 'Map3D' // 地图3D组件名称
-const MAPD_DEFAULT_OPTS = {
+const MAP3D_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 0), // 地图3D位置
   projection: {
     center: [0, 0], // 地图中心坐标
@@ -52,38 +52,50 @@ export class Map3D {
   constructor({ scene, interactionManager = null }, opts = {}) {
     this.scene = scene
     this.interactionManager = interactionManager
-    this.opts = merge({}, MAPD_DEFAULT_OPTS, opts)
+    this.opts = merge({}, MAP3D_DEFAULT_OPTS, opts)
     if (!this.opts.sideMaterial)
       this.opts.sideMaterial = createSideLayerMaterial({ depth: this.opts.extrudeOpts.depth })
 
     this.init()
     return {
       instance: this.group,
-      labelGroup: this.labelGroup,
-      lineGroup: this.lineGroup,
+      labelGroup: this.labelGroup ?? null,
+      lineGroup: this.lineGroup ?? null,
     }
   }
   init() {
-    const { projection, position, renderOrder } = this.opts
+    const { projection, position, renderOrder, mapLabel, mapLine, autoAddToScene } = this.opts
     this.projection = getMercatorProjection(projection)
     this.group = new Group()
     this.group.name = `${NAME}-Group`
     this.group.renderOrder = renderOrder
-    this.group.position.copy(position)
-
-    this.labelGroup = new Group()
-    this.labelGroup.name = `${NAME}-LabelGroup`
-    this.labelGroup.renderOrder = renderOrder // 要保证label不被遮挡
-
-    this.lineGroup = new Group()
-    this.lineGroup.name = `${NAME}-LineGroup`
-
-    this.group.add(this.labelGroup, this.lineGroup)
+    this.group.position.copy(getV3Position(position))
+    if (mapLabel.show) {
+      this.labelGroup = new Group()
+      this.labelGroup.name = `${NAME}-LabelGroup`
+      this.labelGroup.renderOrder = renderOrder // 要保证label不被遮挡
+      this.group.add(this.labelGroup)
+    }
+    if (mapLine.show) {
+      this.lineGroup = new Group()
+      this.lineGroup.name = `${NAME}-LineGroup`
+      this.group.add(this.lineGroup)
+    }
     this.createGroundMap()
+    if (autoAddToScene) this.scene?.add(this.group)
   }
   createGroundMap() {
-    const { data, surfaceMaterial, sideMaterial, extrudeOpts, mapLine, mapLabel, highLight } =
-      this.opts
+    const {
+      data,
+      surfaceMaterial,
+      sideMaterial,
+      extrudeOpts,
+      mapLine,
+      mapLabel,
+      eventList,
+      highLight,
+      highLightMaterial,
+    } = this.opts
     if (!data) return console.warn('data is null, create ground map failed')
 
     data?.features?.forEach((feature) => {
@@ -114,17 +126,16 @@ export class Map3D {
           // 地图交互
           if (this.interactionManager) {
             this.interactionManager.add(mesh)
-            let unbindAll = bindEvents(
-              this.opts.eventList.map((v) => ({ target: mesh, ...v, opts: true })),
-            )
+            let unbindAll = bindEvents(eventList.map((v) => ({ target: mesh, ...v, opts: true })))
             let unbindMouseOut = null,
               unbindMouseOver = null
             if (highLight) {
               unbindMouseOver = bindEvents(mesh, 'mouseover', (e) => {
-                changeMeshMaterial(e.target.parent, this.opts.highLightMaterial)
+                console.log(123456789)
+                changeMeshMaterial(e.target.parent, highLightMaterial, { index: 0 })
               })
               unbindMouseOut = bindEvents(mesh, 'mouseout', (e) => {
-                changeMeshMaterial(e.target.parent, surfaceMaterial)
+                changeMeshMaterial(e.target.parent, surfaceMaterial, { index: 0 })
               })
             }
             // 手动加cleanup方法，去销毁几何体的一些非常规对象（比如解绑事件）
@@ -138,7 +149,7 @@ export class Map3D {
             }
           }
           // 地图线
-          if (mapLine.show) {
+          if (this.lineGroup) {
             const line = new MapLine(
               {
                 projection: this.projection,
@@ -151,7 +162,7 @@ export class Map3D {
         })
       })
       // 地图标签
-      if (mapLabel.show) {
+      if (this.labelGroup) {
         const center = getFeatureCenter(feature)
         const [x, y] = this.projection(center)
         const label = new MapLabel(
@@ -165,6 +176,5 @@ export class Map3D {
       }
       this.group.add(object3D)
     })
-    if (this.opts.autoAddToScene) this.scene?.add(this.group)
   }
 }

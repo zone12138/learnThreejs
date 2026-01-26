@@ -7,8 +7,8 @@ import { TickClock, Size } from '../utils/index'
 import { EventEmitter } from '../libs/index'
 
 const BASIC_DEFAULT_OPTS = {
-  cameraOpts: {},
-  useInteraction: true,
+  cameraOpts: {}, // 相机选项
+  useInteraction: true, // 是否使用交互管理器
 }
 
 export class BasicThreejs extends EventEmitter {

@@ -1,4 +1,5 @@
 export * from './Grid'
+export * from './Map2D'
 export * from './Map3D'
 export * from './MapLabel'
 export * from './MapLine'

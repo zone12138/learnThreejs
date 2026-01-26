@@ -3,11 +3,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { getV3Position } from '../utils/index'
 
 const CAMERA_DEFAULT_OPTS = {
-  position: new Vector3(0, 0, 5),
-  fov: 45,
-  near: 1,
-  far: 10000,
-  helper: false,
+  position: new Vector3(0, 0, 5), // 相机位置
+  // 相机选项
+  fov: 45, // 相机视野角度
+  near: 1, // 相机最近距离
+  far: 10000, // 相机最远距离
+  helper: false, // 是否添加相机辅助线
 }
 
 export class Camera {

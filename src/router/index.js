@@ -6,7 +6,12 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/map1',
+      redirect: '/home',
+    },
+    {
+      path: '/home',
+      name: 'home',
+      component: HomeView,
     },
     // {
     //   path: '/flyline',
@@ -32,6 +37,11 @@ const router = createRouter({
       path: '/map1',
       name: 'map1',
       component: () => import('../views/Map1.vue'),
+    },
+    {
+      path: '/map2',
+      name: 'map2',
+      component: () => import('../views/Map2.vue'),
     },
   ],
 })
