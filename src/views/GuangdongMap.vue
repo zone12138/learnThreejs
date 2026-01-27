@@ -7,7 +7,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
-import * as d3 from 'd3'
+import { geoMercator } from 'd3-geo'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import guangdongData from '../geoJson/广东省.js'
 import chinaData from '../geoJson/中华人民共和国.js'
@@ -201,8 +201,7 @@ const createChinaMapBase = () => {
   scene.add(chinaMapGroup)
 
   // 创建墨卡托投影（与主地图相同）
-  const projection = d3
-    .geoMercator()
+  const projection = geoMercator()
     .center(MAP_CONFIG.projection.center)
     .scale(MAP_CONFIG.projection.scale) // 稍小的比例尺，确保中国地图完整显示
     .translate(MAP_CONFIG.projection.translate)
@@ -351,8 +350,7 @@ const loadMapData = () => {
   scene.add(mapGroup)
 
   // 创建墨卡托投影
-  const projection = d3
-    .geoMercator()
+  const projection = geoMercator()
     .center(MAP_CONFIG.projection.center)
     .scale(MAP_CONFIG.projection.scale)
     .translate(MAP_CONFIG.projection.translate)

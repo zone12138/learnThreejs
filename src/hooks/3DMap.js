@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted, toValue } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import * as d3 from 'd3'
+import { geoMercator } from 'd3-geo'
 
 const isNonEmptyArray = (arr) => Array.isArray(arr) && arr.length > 0
 
@@ -73,8 +73,7 @@ export function use3DMap({
     containerRef,
     cleanups = []
   // 初始化投影
-  const projection = d3
-    .geoMercator()
+  const projection = geoMercator()
     .center(MAP_CONFIG.projection.center)
     .scale(MAP_CONFIG.projection.scale)
     .translate(MAP_CONFIG.projection.translate)

@@ -8,7 +8,7 @@
 import { ref, onMounted } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import * as d3 from 'd3'
+import { geoMercator } from 'd3-geo'
 
 import gzMapData from '../geoJson/广州市.js'
 import groundMapData from '../geoJson/广东省.js'
@@ -126,8 +126,7 @@ const createGroundMap = (mapShapeData) => {
   scene.add(mapGroup) // 将地面地图组添加到场景中
 
   // 初始化投影
-  const projection = d3
-    .geoMercator()
+  const projection = geoMercator()
     .center(MAP_CONFIG.projection.center)
     .scale(MAP_CONFIG.projection.scale)
     .translate(MAP_CONFIG.projection.translate)

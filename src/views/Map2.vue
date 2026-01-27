@@ -22,9 +22,10 @@ import {
 } from 'three'
 import gsap from 'gsap'
 import { BasicThreejs } from '@/threejs/core'
-import { Map2D } from '@/threejs/components/index'
+import { Map2D, FlowLine } from '@/threejs/components/index'
 import { changeMeshMaterial } from '@/threejs/utils/index'
 import image1 from '@/assets/textures/image.png'
+import { getUnion } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
 
 const mapCanvas = ref(null)
@@ -44,7 +45,10 @@ onMounted(() => {
       scale: 50,
     },
     position: new Vector3(0, 0.3, 0),
-    data: map1Data,
+    data: getUnion(map1Data),
+    flowLine: {
+      show: true,
+    },
   })
 
   const axesHelper = new AxesHelper(100)

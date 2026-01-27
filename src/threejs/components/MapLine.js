@@ -2,19 +2,16 @@ import { Vector3, BufferGeometry, LineSegments, LineBasicMaterial } from 'three'
 
 const MAPLINE_DEFAULT_OPTS = {
   color: 0xffffff, // 颜色
-  transparent: true, // 是否透明
-  opacity: 0.5, // 透明度
-  polygonOffset: true, // 是否开启多边形偏移
-  polygonOffsetFactor: -1, // 多边形偏移因子
-  polygonOffsetUnits: -1, // 多边形偏移单位
+  linewidth: 1, // 线宽
+  fog: true, // 是否开启雾效
+  linecap: 'round', // 线头样式
+  linejoin: 'round', // 线角样式
 }
 
 export class MapLine {
-  constructor({ projection, coordinates }, opts = {}) {
+  constructor({ coordinates }, opts = {}) {
     this.coordinates = coordinates
-    this.projection = projection
     this.opts = Object.assign({}, MAPLINE_DEFAULT_OPTS, opts)
-
     return this.create()
   }
 

@@ -30,7 +30,7 @@ const MAP3D_DEFAULT_OPTS = {
   }),
   // 地图拉伸选项(拉伸几何体)
   extrudeOpts: {
-    depth: 0.25, // 地图拉伸深度
+    depth: 0.4, // 地图拉伸深度
     bevelEnabled: true, // 是否开启边框
     bevelSegments: 1, // 地图拉伸分段数
     bevelThickness: 0.1, // 地图拉伸厚度

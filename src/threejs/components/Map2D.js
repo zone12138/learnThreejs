@@ -1,8 +1,8 @@
 import { Mesh, Vector3, Group, Object3D, Shape, ShapeGeometry, MeshBasicMaterial } from 'three'
 import merge from 'lodash-es/merge'
-import { MapLabel, MapLine } from './index.js'
+import { MapLabel, MapLine, FlowLine } from './index.js'
 import { getV3Position } from '../utils/index.js'
-import { getMercatorProjection, getFeatureCenter, bindEvents } from '../libs/index.js'
+import { getMercatorProjection, getFeatureCenter, bindEvents, getUnion } from '../libs/index.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 const NAME = 'Map2D' // 地图2D组件名称
@@ -28,13 +28,18 @@ const MAP2D_DEFAULT_OPTS = {
     show: false, // 是否显示地图标签
     opts: {}, // 地图标签选项
   },
+  flowLine: {
+    show: false, // 是否显示流水线
+    opts: {}, // 流水线选项
+  },
   eventList: [], // 事件监听
 }
 
 export class Map2D {
-  constructor({ scene, interactionManager = null }, opts = {}) {
+  constructor({ scene, interactionManager = null, tickClock = null }, opts = {}) {
     this.scene = scene
     this.interactionManager = interactionManager
+    this.tickClock = tickClock
     this.opts = merge({}, MAP2D_DEFAULT_OPTS, opts)
     this.init()
 
@@ -42,10 +47,12 @@ export class Map2D {
       instance: this.group,
       labelGroup: this.labelGroup ?? null,
       lineGroup: this.lineGroup ?? null,
+      flowLineGroup: this.flowLineGroup ?? null,
     }
   }
   init() {
-    const { projection, position, renderOrder, mapLabel, mapLine, autoAddToScene } = this.opts
+    const { projection, position, renderOrder, mapLabel, mapLine, flowLine, autoAddToScene } =
+      this.opts
     this.projection = getMercatorProjection(projection)
     this.group = new Group()
     this.group.name = `${NAME}-Group`
@@ -63,12 +70,27 @@ export class Map2D {
       this.lineGroup.name = `${NAME}-LineGroup`
       this.group.add(this.lineGroup)
     }
+    if (flowLine.show) {
+      this.flowLineGroup = new Group()
+      this.flowLineGroup.name = `${NAME}-FlowLineGroup`
+      this.flowLineGroup.renderOrder = renderOrder // 要保证flowLine不被遮挡
+      this.group.add(this.flowLineGroup)
+    }
     this.createGroundMap()
     if (autoAddToScene) this.scene.add(this.group)
   }
   createGroundMap() {
-    const { data, mergeAll, material, highLight, highLightMaterial, eventList, mapLine, mapLabel } =
-      this.opts
+    const {
+      data,
+      mergeAll,
+      material,
+      highLight,
+      highLightMaterial,
+      eventList,
+      mapLine,
+      mapLabel,
+      flowLine,
+    } = this.opts
     if (!data) return console.warn('data is null, create ground map failed')
     const geometries = []
     data?.features?.forEach((feature) => {
@@ -157,6 +179,25 @@ export class Map2D {
       const geometry = mergeGeometries(geometries)
       const mesh = new Mesh(geometry, material)
       this.group.add(mesh)
+    }
+    if (flowLine.show) {
+      const outline = getUnion(data, { type: 'feature' })
+      console.log(outline)
+      const { geometry = {} } = outline ?? {}
+      const { coordinates = [], type } = geometry
+      let polygons = coordinates
+      if (type === 'Polygon') polygons = coordinates[0]
+      polygons?.forEach((polygon) => {
+        const outerRing = polygon[0] // 外圈
+        // 转换坐标
+        const points = outerRing.map((coord) => {
+          const [x, y] = this.projection(coord)
+          return new Vector3(x, -y + 0.1, 0)
+        })
+        this.flowLineGroup.add(
+          new FlowLine({ tickClock: this.tickClock }, { ...flowLine.opts, points }),
+        )
+      })
     }
   }
 }
