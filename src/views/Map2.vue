@@ -25,7 +25,7 @@ import { BasicThreejs } from '@/threejs/core'
 import { Map2D, FlowLine } from '@/threejs/components/index'
 import { changeMeshMaterial } from '@/threejs/utils/index'
 import image1 from '@/assets/textures/image.png'
-import { getUnion } from '@/threejs/libs/index'
+import { getUnion, getFeatureCoordinates } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
 
 const mapCanvas = ref(null)
@@ -50,6 +50,8 @@ onMounted(() => {
       show: true,
     },
   })
+
+  const polygons = getFeatureCoordinates(map1Data, { filter: [0, 9] })
 
   const axesHelper = new AxesHelper(100)
   map.scene.add(axesHelper)

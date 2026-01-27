@@ -1,6 +1,13 @@
 import { Vector2 } from 'three'
 import { geoMercator } from 'd3-geo'
-import { union, featureCollection, centroid, centerOfMass, pointOnFeature } from '@turf/turf'
+import {
+  union,
+  featureCollection,
+  centroid,
+  centerOfMass,
+  pointOnFeature,
+  flatten,
+} from '@turf/turf'
 
 console.log(union)
 
@@ -69,4 +76,49 @@ export const getUnion = (geoJson, opts = { type: 'geojson' }) => {
   }, null)
   if (opts.type === 'geojson') return { type: 'FeatureCollection', features: [mergeOutline] }
   return mergeOutline
+}
+
+/**
+ * 获取特征坐标
+ * @param {*} geoJson geoJson数据
+ * @param {Object} opts 配置项
+ * @param {string|number|Array<number>} opts.filter 筛选模式: 'all'(所有线); 'max'(最大线); 'min'(最小线); number(第几条线); Array<number>(多条线)
+ */
+export const getFeatureCoordinates = (geoJson, opts = { filter: 'all' }) => {
+  const outline = getUnion(geoJson, { type: 'feature' })
+  if (!outline) return []
+  const flattenOutline = flatten(outline)
+  if (!flattenOutline) return []
+  const { features = [] } = flattenOutline ?? {}
+  const { filter } = opts
+  let polygons = []
+  for (let i = 0; i < features.length; i++) {
+    const feature = features[i]
+    const { geometry = {} } = feature ?? {}
+    const { coordinates = [] } = geometry
+    if (filter === i) {
+      polygons = [coordinates[0]]
+      break
+    } else if (Array.isArray(filter)) {
+      for (let j = 0; j < filter.length; j++) {
+        if (filter[j] === i) {
+          polygons.push(coordinates[0])
+        }
+        if (j === filter.length - 1) {
+          break
+        }
+      }
+    } else if (filter === 'all') {
+      polygons.push(coordinates[0])
+    } else if (filter === 'max') {
+      if (coordinates[0].length > (polygons[0]?.length ?? 0)) {
+        polygons = [coordinates[0]]
+      }
+    } else if (filter === 'min') {
+      if ((coordinates[0].length < polygons[0]?.length ?? 0) || polygons.length === 0) {
+        polygons = [coordinates[0]]
+      }
+    }
+  }
+  return polygons
 }

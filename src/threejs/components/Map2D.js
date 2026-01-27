@@ -1,6 +1,6 @@
 import { Mesh, Vector3, Group, Object3D, Shape, ShapeGeometry, MeshBasicMaterial } from 'three'
 import merge from 'lodash-es/merge'
-import { MapLabel, MapLine, FlowLine } from './index.js'
+import { MapLabel, MapLine, FlowLineGroup } from './index.js'
 import { getV3Position } from '../utils/index.js'
 import { getMercatorProjection, getFeatureCenter, bindEvents, getUnion } from '../libs/index.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils'
@@ -30,6 +30,7 @@ const MAP2D_DEFAULT_OPTS = {
   },
   flowLine: {
     show: false, // 是否显示流水线
+    filter: 'max', // all: 所有线; max: 最大线; min: 最小线; number: 第几条线; Array<number>: 多条线
     opts: {}, // 流水线选项
   },
   eventList: [], // 事件监听
@@ -70,12 +71,6 @@ export class Map2D {
       this.lineGroup.name = `${NAME}-LineGroup`
       this.group.add(this.lineGroup)
     }
-    if (flowLine.show) {
-      this.flowLineGroup = new Group()
-      this.flowLineGroup.name = `${NAME}-FlowLineGroup`
-      this.flowLineGroup.renderOrder = renderOrder // 要保证flowLine不被遮挡
-      this.group.add(this.flowLineGroup)
-    }
     this.createGroundMap()
     if (autoAddToScene) this.scene.add(this.group)
   }
@@ -90,6 +85,8 @@ export class Map2D {
       mapLine,
       mapLabel,
       flowLine,
+      projection,
+      renderOrder,
     } = this.opts
     if (!data) return console.warn('data is null, create ground map failed')
     const geometries = []
@@ -181,23 +178,10 @@ export class Map2D {
       this.group.add(mesh)
     }
     if (flowLine.show) {
-      const outline = getUnion(data, { type: 'feature' })
-      console.log(outline)
-      const { geometry = {} } = outline ?? {}
-      const { coordinates = [], type } = geometry
-      let polygons = coordinates
-      if (type === 'Polygon') polygons = coordinates[0]
-      polygons?.forEach((polygon) => {
-        const outerRing = polygon[0] // 外圈
-        // 转换坐标
-        const points = outerRing.map((coord) => {
-          const [x, y] = this.projection(coord)
-          return new Vector3(x, -y + 0.1, 0)
-        })
-        this.flowLineGroup.add(
-          new FlowLine({ tickClock: this.tickClock }, { ...flowLine.opts, points }),
-        )
-      })
+      this.flowLineGroup = new FlowLineGroup({ tickClock: this.tickClock }, { projection, data, filter: flowLine.filter, flowLineOpts: flowLine.opts })
+      this.flowLineGroup.instance.name = `${NAME}-FlowLineGroup`
+      this.flowLineGroup.instance.renderOrder = renderOrder // 要保证flowLine不被遮挡
+      this.group.add(this.flowLineGroup.instance)
     }
   }
 }

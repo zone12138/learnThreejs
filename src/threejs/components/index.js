@@ -1,6 +1,6 @@
 // export * from './FlowLine_1px'
 export * from './FlowLine'
-export * from './Grid'
+export * from './FlowLineGroup'
 export * from './Grid'
 export * from './Map2D'
 export * from './Map3D'
