@@ -6,5 +6,5 @@
 - 地图标签[MapLabel]组件: Sprite
 - 地图线[MapLine]组件: LineSegments
 - 平面[Plane]组件: Mesh
-- 地图3D组件[Map3D]组件: { instance: Group, labelGroup: Group | null, lineGroup: Group | null }
-- 地图2D组件[Map2D]组件: { instance: Group, labelGroup: Group | null, lineGroup: Group | null,flowLineGroup: Group | null }
+- 地图3D组件[Map3D]组件: { instance: Group, labelGroup: Group | null, lineGroup: Group | null, flowLineGroup: FlowLineGroup | null }
+- 地图2D组件[Map2D]组件: { instance: Group, labelGroup: Group | null, lineGroup: Group | null, flowLineGroup: FlowLineGroup | null }

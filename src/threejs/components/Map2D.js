@@ -1,8 +1,8 @@
 import { Mesh, Vector3, Group, Object3D, Shape, ShapeGeometry, MeshBasicMaterial } from 'three'
 import merge from 'lodash-es/merge'
 import { MapLabel, MapLine, FlowLineGroup } from './index.js'
-import { getV3Position } from '../utils/index.js'
-import { getMercatorProjection, getFeatureCenter, bindEvents, getUnion } from '../libs/index.js'
+import { getV3Position, changeMeshMaterial } from '../utils/index.js'
+import { getMercatorProjection, getFeatureCenter, bindEvents } from '../libs/index.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 const NAME = 'Map2D' // 地图2D组件名称
@@ -19,7 +19,7 @@ const MAP2D_DEFAULT_OPTS = {
   highLightMaterial: new MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }), // 地图2D元素的高亮材质，用于渲染地图2D元素的高亮效果
   data: null, // 地图2D元素的数据，用于存储地图2D元素的相关信息
   autoAddToScene: true, // 是否自动添加到场景中
-  mergeAll: true, // 是否合并所有地图2D元素
+  mergeAll: true, // 是否合并所有地图2D元素【合并所有区域，不拥有交互功能】
   mapLine: {
     show: true, // 是否显示地图线
     opts: {}, // 地图线选项
@@ -72,22 +72,17 @@ export class Map2D {
       this.group.add(this.lineGroup)
     }
     this.createGroundMap()
+    if (flowLine.show) {
+      this.flowLineGroup = this.createFlowLineGroup()
+      this.flowLineGroup.instance.name = `${NAME}-FlowLineGroup`
+      this.flowLineGroup.instance.renderOrder = renderOrder // 要保证flowLine不被遮挡
+      this.group.add(this.flowLineGroup.instance)
+    }
     if (autoAddToScene) this.scene.add(this.group)
   }
   createGroundMap() {
-    const {
-      data,
-      mergeAll,
-      material,
-      highLight,
-      highLightMaterial,
-      eventList,
-      mapLine,
-      mapLabel,
-      flowLine,
-      projection,
-      renderOrder,
-    } = this.opts
+    const { data, mergeAll, material, highLight, highLightMaterial, eventList, mapLine, mapLabel } =
+      this.opts
     if (!data) return console.warn('data is null, create ground map failed')
     const geometries = []
     data?.features?.forEach((feature) => {
@@ -130,7 +125,7 @@ export class Map2D {
                   changeMeshMaterial(e.target.parent, highLightMaterial)
                 })
                 unbindMouseOut = bindEvents(mesh, 'mouseout', (e) => {
-                  changeMeshMaterial(e.target.parent, surfaceMaterial)
+                  changeMeshMaterial(e.target.parent, material)
                 })
               }
               // 手动加cleanup方法，去销毁几何体的一些非常规对象（比如解绑事件）
@@ -177,11 +172,13 @@ export class Map2D {
       const mesh = new Mesh(geometry, material)
       this.group.add(mesh)
     }
-    if (flowLine.show) {
-      this.flowLineGroup = new FlowLineGroup({ tickClock: this.tickClock }, { projection, data, filter: flowLine.filter, flowLineOpts: flowLine.opts })
-      this.flowLineGroup.instance.name = `${NAME}-FlowLineGroup`
-      this.flowLineGroup.instance.renderOrder = renderOrder // 要保证flowLine不被遮挡
-      this.group.add(this.flowLineGroup.instance)
-    }
+  }
+  createFlowLineGroup() {
+    const { flowLine, projection, data } = this.opts
+    const { filter, opts } = flowLine
+    return new FlowLineGroup(
+      { tickClock: this.tickClock },
+      { projection, data, filter, flowLineOpts: opts },
+    )
   }
 }

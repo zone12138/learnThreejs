@@ -1,7 +1,7 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import merge from 'lodash-es/merge'
 import { createSideLayerMaterial, changeMeshMaterial, getV3Position } from '../utils/index.js'
-import { MapLine, MapLabel } from './index.js'
+import { MapLine, MapLabel, FlowLineGroup } from './index.js'
 import { bindEvents, getFeatureCenter, getMercatorProjection } from '../libs/index'
 
 const NAME = 'Map3D' // 地图3D组件名称
@@ -17,7 +17,7 @@ const MAP3D_DEFAULT_OPTS = {
   surfaceMaterial: new MeshBasicMaterial({
     color: 0x48afff, // 地图表面颜色
     transparent: true, // 是否透明
-    opacity: 1, // 透明度
+    opacity: 0.5, // 透明度
   }),
   // 地图边框材质
   sideMaterial: null,
@@ -45,13 +45,19 @@ const MAP3D_DEFAULT_OPTS = {
     show: true, // 是否显示地图标签
     opts: {}, // 地图标签选项
   },
+  flowLine: {
+    show: true, // 是否显示流动线
+    filter: 'max', // all: 所有线; max: 最大线; min: 最小线; number: 第几条线; Array<number>: 多条线
+    opts: {}, // 流动线选项
+  },
   eventList: [], // 事件监听
 }
 
 export class Map3D {
-  constructor({ scene, interactionManager = null }, opts = {}) {
+  constructor({ scene, interactionManager = null, tickClock }, opts = {}) {
     this.scene = scene
     this.interactionManager = interactionManager
+    this.tickClock = tickClock
     this.opts = merge({}, MAP3D_DEFAULT_OPTS, opts)
     if (!this.opts.sideMaterial)
       this.opts.sideMaterial = createSideLayerMaterial({ depth: this.opts.extrudeOpts.depth })
@@ -64,7 +70,8 @@ export class Map3D {
     }
   }
   init() {
-    const { projection, position, renderOrder, mapLabel, mapLine, autoAddToScene } = this.opts
+    const { projection, position, renderOrder, mapLabel, mapLine, flowLine, autoAddToScene } =
+      this.opts
     this.projection = getMercatorProjection(projection)
     this.group = new Group()
     this.group.name = `${NAME}-Group`
@@ -82,6 +89,12 @@ export class Map3D {
       this.group.add(this.lineGroup)
     }
     this.createGroundMap()
+    if (flowLine.show) {
+      this.flowLineGroup = this.createFlowLineGroup()
+      this.flowLineGroup.instance.name = `${NAME}-FlowLineGroup`
+      this.flowLineGroup.instance.renderOrder = renderOrder // 要保证flowLine不被遮挡
+      this.group.add(this.flowLineGroup.instance)
+    }
     if (autoAddToScene) this.scene?.add(this.group)
   }
   createGroundMap() {
@@ -175,5 +188,13 @@ export class Map3D {
       }
       this.group.add(object3D)
     })
+  }
+  createFlowLineGroup() {
+    const { flowLine, projection, data, extrudeOpts } = this.opts
+    const { filter, opts } = flowLine
+    return new FlowLineGroup(
+      { tickClock: this.tickClock },
+      { projection, data, filter, depth: extrudeOpts.depth + 0.14, flowLineOpts: opts },
+    )
   }
 }

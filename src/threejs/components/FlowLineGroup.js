@@ -10,6 +10,7 @@ const FLG_DEFAULT_OPTS = {
     translate: [0, 0],
   },
   data: null,
+  depth: 0, // 流光线段z轴坐标【3D的需加上z轴】
   filter: 'all', // all: 所有线; max: 最大线; min: 最小线; number: 第几条线; Array<number>: 多条线
   flowLineOpts: {},
 }
@@ -27,7 +28,8 @@ export class FlowLineGroup {
     }
   }
   init() {
-    const { data, filter, flowLineOpts } = this.opts
+    const { data, filter, depth, flowLineOpts } = this.opts
+    if (!data) return console.warn('data is null, create flow line group failed')
     this.flowLineGroup = new Group()
     const outline = getUnion(data, { type: 'feature' })
     const { geometry = {} } = outline ?? {}
@@ -39,13 +41,13 @@ export class FlowLineGroup {
       // 转换坐标
       const points = polygon.map((coord) => {
         const [x, y] = this.projection(coord)
-        return new Vector3(x, -y, 0)
+        return new Vector3(x, -y, depth)
       })
       const flowLine = new FlowLine({ tickClock: this.tickClock }, { ...flowLineOpts, points })
       this.flowLineGroup.add(flowLine.instance)
       // 如果有tickClock，就不添加到列表中；否则，添加到列表中，后续手动执行update方法更新
       if (!this.tickClock) this.flowLineList.push(flowLine)
-      })
+    })
   }
   update() {
     this.flowLineList.forEach((flowLine) => flowLine.update())

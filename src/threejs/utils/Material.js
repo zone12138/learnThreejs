@@ -88,8 +88,8 @@ export const changeMeshMaterial = (targetObject, materialOrConfig, opts = {}) =>
         if (!mat) return
         if (mat.isMaterial) {
           // 1. 如果child的材质是数组材质: 根据newMaterials按顺序替换材质
-          // 2. 如果child的材质是非数组材质: 直接赋值newMaterials【替换所有材质】
-          isArrayMaterial ? (child.material[i] = mat) : (child.material = newMaterials)
+          // 2. 如果child的材质是非数组材质: 直接赋值mat
+          isArrayMaterial ? (child.material[i] = mat) : (child.material = mat)
         } else if (typeof mat === 'object') {
           if (cloneMaterial) {
             // 更新引用指向新的克隆体
@@ -102,11 +102,15 @@ export const changeMeshMaterial = (targetObject, materialOrConfig, opts = {}) =>
             // 特殊处理颜色 (Three.js 的 Color 对象建议用 set 方法)
             if (key === 'color') {
               const colorVal = new Color(value)
-              isArrayMaterial ? (child.material[i]?.color?.set(colorVal)) : (child.material?.color?.set(colorVal))
+              isArrayMaterial
+                ? child.material[i]?.color?.set(colorVal)
+                : child.material?.color?.set(colorVal)
             } else if (key === 'map' || key === 'alphaMap') {
               // 特殊处理贴图 (如果传入的是 Texture 对象 - 贴图更新通常需要标记)
               isArrayMaterial ? (child.material[i][key] = value) : (child.material[key] = value)
-              isArrayMaterial ? (child.material[i].needsUpdate = true) : (child.material.needsUpdate = true)
+              isArrayMaterial
+                ? (child.material[i].needsUpdate = true)
+                : (child.material.needsUpdate = true)
             } else {
               // 普通属性直接赋值 (如 opacity, transparent, wireframe)
               isArrayMaterial ? (child.material[i][key] = value) : (child.material[key] = value)

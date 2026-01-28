@@ -42,12 +42,14 @@ onMounted(() => {
   const map2D = new Map2D(map, {
     projection: {
       center: [113.280637, 23.125178],
-      scale: 50,
+      scale: 30,
     },
     position: new Vector3(0, 0.3, 0),
-    data: getUnion(map1Data),
+    data: map1Data,
+    mergeAll: false,
     flowLine: {
       show: true,
+      filter: [0, 9],
     },
   })
 
