@@ -22,7 +22,7 @@ import {
 } from 'three'
 import gsap from 'gsap'
 import { BasicThreejs } from '@/threejs/core'
-import { Grid, Map3D, Plane } from '@/threejs/components/index'
+import { Grid, Map3D, Plane, DiffusionRing } from '@/threejs/components/index'
 import { changeMeshMaterial } from '@/threejs/utils/index'
 import image1 from '@/assets/textures/image.png'
 import map1Data from '@/geoJson/广东省.json'
@@ -103,6 +103,15 @@ onMounted(() => {
   map3D.instance.scale.set(1, 1, 0)
   map3D.lineGroup.visible = false
   map3D.labelGroup.visible = false
+
+  const diffusionRing = new DiffusionRing(map, {
+    color: 0x1b4b70,
+    speed: 0.002,
+    renderOrder: 10,
+  })
+  diffusionRing.instance.rotation.x = -Math.PI / 2
+  map.scene.add(diffusionRing.instance)
+  console.log(map.scene)
 
   const axesHelper = new AxesHelper(100)
   map.scene.add(axesHelper)

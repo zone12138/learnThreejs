@@ -1,4 +1,5 @@
 // export * from './FlowLine_1px'
+export * from './DiffusionRing'
 export * from './FlowLine'
 export * from './FlowLineGroup'
 export * from './Grid'
