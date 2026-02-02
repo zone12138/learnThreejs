@@ -21,12 +21,15 @@ import {
   Group,
 } from 'three'
 import gsap from 'gsap'
+import { simplify } from '@turf/turf'
 import { BasicThreejs } from '@/threejs/core'
 import { Map2D, FlowLine } from '@/threejs/components/index'
 import { changeMeshMaterial } from '@/threejs/utils/index'
 import image1 from '@/assets/textures/image.png'
 import { getUnion, getFeatureCoordinates } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
+
+const mapSimplified = simplify(map1Data, { tolerance: 0.01, highQuality: true })
 
 const mapCanvas = ref(null)
 let map = null,
@@ -45,7 +48,7 @@ onMounted(() => {
       scale: 30,
     },
     position: new Vector3(0, 0.3, 0),
-    data: map1Data,
+    data: mapSimplified,
     mergeAll: false,
     flowLine: {
       show: true,
@@ -53,7 +56,7 @@ onMounted(() => {
     },
   })
 
-  const polygons = getFeatureCoordinates(map1Data, { filter: [0, 9] })
+  const polygons = getFeatureCoordinates(mapSimplified, { filter: [0, 9] })
 
   const axesHelper = new AxesHelper(100)
   map.scene.add(axesHelper)

@@ -9,8 +9,6 @@ import {
   flatten,
 } from '@turf/turf'
 
-console.log(union)
-
 const PROJECTION_DEFAULT_CENTER = {
   center: new Vector2(0, 0),
   scale: 1,
@@ -41,7 +39,7 @@ export const getMercatorProjection = (projection = {}) => {
 export const getFeatureCenter = (feature = {}, opts = { type: 'centroid' }) => {
   const { properties, property } = feature
   const attrCenter =
-    properties?.centroid ?? properties.center ?? property?.centroid ?? property.center
+    properties?.centroid ?? properties?.center ?? property?.centroid ?? property?.center
   if (Array.isArray(attrCenter)) return attrCenter
   const defaultCenter = [0, 0]
   try {
