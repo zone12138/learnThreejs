@@ -23,6 +23,7 @@ import {
 import gsap from 'gsap'
 import { BasicThreejs } from '@/threejs/core'
 import { Grid, Map3D, Plane, Map2D } from '@/threejs/components/index'
+import { Grid_O } from '@/threejs/components/Grid_Old'
 import { changeMeshMaterial } from '@/threejs/utils/index'
 import image1 from '@/assets/textures/image.png'
 import map1Data from '@/geoJson/广东省.json'
@@ -38,7 +39,7 @@ onMounted(() => {
       // position: new Vector3(0, 10, 12),
     },
   })
-  const grid = new Grid(map, {
+  const grid = new Grid_O(map, {
     gridSize: 50,
     gridDivision: 20,
     gridColor: 0x1b4b70,

@@ -23,7 +23,7 @@ import {
 import gsap from 'gsap'
 import { simplify } from '@turf/turf'
 import { BasicThreejs } from '@/threejs/core'
-import { Map2D, FlowLine } from '@/threejs/components/index'
+import { Map2D, FlowLine, Grid } from '@/threejs/components/index'
 import { changeMeshMaterial } from '@/threejs/utils/index'
 import image1 from '@/assets/textures/image.png'
 import { getUnion, getFeatureCoordinates } from '@/threejs/libs/index'
@@ -40,6 +40,16 @@ onMounted(() => {
       helper: true,
       // position: new Vector3(0, 10, 12),
     },
+  })
+
+  const grid = new Grid(map, {
+    gridSize: 50,
+    gridDivision: 20,
+    gridColor: 0x1b4b70,
+    shapeSize: 0.5,
+    shapeColor: 0x2a5f8a,
+    pointSize: 0.1,
+    pointColor: 0x154d7d,
   })
 
   const map2D = new Map2D(map, {

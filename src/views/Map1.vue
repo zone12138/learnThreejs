@@ -44,7 +44,6 @@ onMounted(() => {
     shapeSize: 0.5,
     shapeColor: 0x2a5f8a,
     pointSize: 0.1,
-    pointColor: 0x154d7d,
   })
   const plane1 = new Plane(map, {
     width: 10,
