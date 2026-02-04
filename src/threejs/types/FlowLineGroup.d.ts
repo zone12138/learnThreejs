@@ -1,4 +1,4 @@
-import { GeoProjection } from './Variable.js'
+import { GeoProjectionOpts } from './Variable.js'
 import { FlowLineOpts } from './FlowLine.d.ts'
 
 type FilterEnum = 'all' | 'min' | 'max' | number | number[]
@@ -7,7 +7,7 @@ export interface FlowLineGroupOpts {
   /**
    * 投影配置项
    */
-  projection: GeoProjection
+  projection: GeoProjectionOpts
   /**
    * 数据数组
    */

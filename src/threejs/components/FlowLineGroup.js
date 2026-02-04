@@ -3,6 +3,7 @@ import merge from 'lodash-es/merge'
 import { FlowLine } from './index'
 import { getUnion, getMercatorProjection, getFeatureCoordinates } from '../libs/index.js'
 
+/** @type {import('../types').FlowLineGroupOpts} */
 const FLG_DEFAULT_OPTS = {
   projection: {
     center: [0, 0],

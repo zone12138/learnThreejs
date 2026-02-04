@@ -12,6 +12,7 @@ import merge from 'lodash-es/merge'
 import flowline from '@/threejs/textures/flowline.png'
 const FLOW_LINE_TEXTURE = new TextureLoader().load(flowline)
 
+/** @type {import('../types').FlowLineOpts} */
 const FLOW_LINE_DEFAULT_OPTS = {
   points: [], // 基础路径点 (Vector3 数组)
   speed: 0.002, // 流动速度

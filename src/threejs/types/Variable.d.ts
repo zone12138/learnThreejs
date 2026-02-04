@@ -1,6 +1,6 @@
 import { Vector3, Vector3Tuple, Vector3Like } from 'three'
 
-export interface GeoProjection {
+export interface GeoProjectionOpts {
   /**
    * 投影中心
    */

@@ -9,15 +9,16 @@ import {
   flatten,
 } from '@turf/turf'
 
+/** @type {import('../types/Variable').GeoProjectionOpts} */
 const PROJECTION_DEFAULT_CENTER = {
-  center: new Vector2(0, 0),
+  center: [0, 0],
   scale: 1,
-  translate: new Vector2(0, 0),
+  translate: [0, 0],
 }
 
 /**
  * 获取Mercator投影
- * @param {*} projection 投影参数
+ * @param {import('../types/Variable').GeoProjectionOpts} projection 投影参数
  * @returns Mercator投影
  */
 export const getMercatorProjection = (projection = {}) => {
@@ -80,7 +81,7 @@ export const getUnion = (geoJson, opts = { type: 'geojson' }) => {
  * 获取特征坐标
  * @param {*} geoJson geoJson数据
  * @param {Object} opts 配置项
- * @param {string|number|Array<number>} opts.filter 筛选模式: 'all'(所有线); 'max'(最大线); 'min'(最小线); number(第几条线); Array<number>(多条线)
+ * @param {import('../types').FlowLineGroupOpts['filter']} opts.filter 筛选模式: 'all'(所有线); 'max'(最大线); 'min'(最小线); number(第几条线); Array<number>(多条线)
  */
 export const getFeatureCoordinates = (geoJson, opts = { filter: 'all' }) => {
   const outline = getUnion(geoJson, { type: 'feature' })

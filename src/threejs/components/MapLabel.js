@@ -1,6 +1,7 @@
 import { CanvasTexture, SpriteMaterial, Sprite, LinearFilter } from 'three'
 import { getV3Position } from '../utils/index.js'
 
+/** @type {import('../types').MapLabelOpts} */
 const MAPLABEL_DEFAULT_OPTS = {
   fontSize: 16, // 字体大小
   fontFamily: 'Arial', // 字体

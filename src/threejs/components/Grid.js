@@ -16,6 +16,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import merge from 'lodash-es/merge'
 import { getV3Position } from '../utils/index'
 
+/** @type {import('../types').GridOpts} */
 const GRID_DEFAULT_OPTS = {
   name: 'grid',
   position: new Vector3(0, 0, 0),
@@ -28,7 +29,7 @@ const GRID_DEFAULT_OPTS = {
   pointLayout: { row: 200, col: 200 }, // 密度决定3D平滑度
   scan: {
     enabled: true, // 是否开启扫光效果(布尔值)
-    color: 0x00ffff, // 扫光颜色(浮点数)
+    color: 0x00ffff, // 扫光颜色
     width: 5.0, // 光圈本身的宽度(浮点数)
     bumpHeight: 0.2, // 凸起高度(浮点数)
     speed: 10, // 扫描速度(浮点数)

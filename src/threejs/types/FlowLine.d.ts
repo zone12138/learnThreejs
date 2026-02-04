@@ -36,5 +36,5 @@ export interface FlowLineOpts {
   /**
    * 材质
    */
-  material: MeshBasicMaterialParameters,
+  materialOpts: MeshBasicMaterialParameters,
 }

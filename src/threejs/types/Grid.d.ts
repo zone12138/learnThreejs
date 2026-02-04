@@ -1,4 +1,5 @@
-import { Vector3, Color, Group, Scene } from 'three'
+import { Color, Group, Scene } from 'three'
+import { Vector3LikeOrTuple } from './Variable'
 
 export interface ScanOpts {
   /**
@@ -32,7 +33,7 @@ export interface GridOpts {
   /**
    * 网格位置
    */
-  position?: Vector3
+  position?: Vector3LikeOrTuple
   /**
    * 网格大小
    */

@@ -1,6 +1,7 @@
 import { Vector3, BufferGeometry, LineSegments, LineBasicMaterial } from 'three'
 import merge from 'lodash-es/merge'
 
+/** @type {import('three').LineBasicMaterialParameters} */
 const MAPLINE_DEFAULT_OPTS = {
   color: 0xffffff, // 颜色
   linewidth: 1, // 线宽

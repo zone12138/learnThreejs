@@ -1,6 +1,7 @@
 import merge from 'lodash-es/merge'
 import { AdditiveBlending, Color, DoubleSide, Mesh, PlaneGeometry, ShaderMaterial } from 'three'
 
+/** @type {import('../types').DiffusionRingOpts} */
 const DIFFUSION_RINGING = {
   color: 0x00ffff, // 颜色
   radius: 20, // 半径

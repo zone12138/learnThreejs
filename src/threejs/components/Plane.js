@@ -2,6 +2,7 @@ import { Vector3, MeshBasicMaterial, PlaneGeometry, Mesh } from 'three'
 import merge from 'lodash-es/merge'
 import { getV3Position } from '../utils/index.js'
 
+/** @type {import('../types').PlaneOpts} */
 const PLANE_DEFAULT_OPTS = {
   width: 10,
   scale: 1,
