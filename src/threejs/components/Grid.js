@@ -27,11 +27,11 @@ const GRID_DEFAULT_OPTS = {
   pointColor: 0x66673ff,
   pointLayout: { row: 200, col: 200 }, // 密度决定3D平滑度
   scan: {
-    enabled: true,
-    color: 0x00ffff,
-    width: 5.0, // 光圈本身的宽度
-    bumpHeight: 0.2, // 凸起高度
-    speed: 10, // 扫描速度
+    enabled: true, // 是否开启扫光效果(布尔值)
+    color: 0x00ffff, // 扫光颜色(浮点数)
+    width: 5.0, // 光圈本身的宽度(浮点数)
+    bumpHeight: 0.2, // 凸起高度(浮点数)
+    speed: 10, // 扫描速度(浮点数)
   },
   autoAddToScene: true,
 }

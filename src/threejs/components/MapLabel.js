@@ -1,4 +1,4 @@
-import { CanvasTexture, SpriteMaterial, Sprite, Vector3, LinearFilter } from 'three'
+import { CanvasTexture, SpriteMaterial, Sprite, LinearFilter } from 'three'
 import { getV3Position } from '../utils/index.js'
 
 const MAPLABEL_DEFAULT_OPTS = {
@@ -16,6 +16,11 @@ const MAPLABEL_DEFAULT_OPTS = {
 }
 
 export class MapLabel {
+  /**
+   * 
+   * @param {*} param0 
+   * @param {import('../types').MapLabelOpts} opts 配置项
+   */
   constructor({ name, position }, opts = {}) {
     this.name = name
     this.position = position
@@ -84,7 +89,7 @@ export class MapLabel {
     sprite.scale.set(rawWidth * this.opts.scale, rawHeight * this.opts.scale, 1)
 
     // 设置位置 + 偏移量
-    sprite.position.copy(getV3Position(this.position)).add(new Vector3(...this.opts.offset))
+    sprite.position.copy(getV3Position(this.position)).add(getV3Position(this.opts.offset))
 
     canvas.remove()
 

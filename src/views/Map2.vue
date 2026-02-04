@@ -14,7 +14,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { TextureLoader, Vector3, AxesHelper } from 'three'
 import { simplify } from '@turf/turf'
 import { BasicThreejs } from '@/threejs/core'
-import { Map2D, Grid } from '@/threejs/components/index'
+import { Map2D, Grid, FlowLine } from '@/threejs/components/index'
 import { getFeatureCoordinates } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
 
@@ -38,6 +38,14 @@ onMounted(() => {
     shapeColor: 0x2a5f8a,
     pointSize: 0.1,
     pointColor: 0x154d7d,
+    position: new Vector3(0, 0.3, 0),
+    scan: {
+      enabled: true,
+      color: 0xffffff,
+      width: 0.5,
+      bumpHeight: 0.5,
+      speed: 0.5,
+    },
   })
   grid.rotation.x = -Math.PI / 2
 

@@ -18,6 +18,11 @@ const FLG_DEFAULT_OPTS = {
 export class FlowLineGroup extends Group {
   #opts = {}
   #flowLineList = []
+  /**
+   * 
+   * @param {*} param0 时钟对象
+   * @param {import('../types').FlowLineGroupOpts} opts 配置项
+   */
   constructor({ tickClock }, opts = {}) {
     super()
     this.#opts = merge({}, FLG_DEFAULT_OPTS, opts)

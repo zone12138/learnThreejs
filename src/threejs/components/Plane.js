@@ -19,6 +19,11 @@ const PLANE_DEFAULT_OPTS = {
 
 export class Plane extends Mesh {
   #opts = {}
+  /**
+   * 
+   * @param {*} param0 时钟对象
+   * @param {import('../types').PlaneOpts} opts 配置项
+   */
   constructor({ scene, tickClock }, opts = {}) {
     const mergedOpts = merge({}, PLANE_DEFAULT_OPTS, opts)
     super(new PlaneGeometry(mergedOpts.width, mergedOpts.width), mergedOpts.material)

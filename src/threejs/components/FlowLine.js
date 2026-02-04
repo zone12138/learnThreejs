@@ -35,6 +35,11 @@ const FLOW_LINE_DEFAULT_OPTS = {
 
 export class FlowLine extends Mesh {
   #opts = {}
+  /**
+   * 
+   * @param {*} param0 时钟对象
+   * @param {import('../types').FlowLineOpts} opts 配置项
+   */
   constructor({ tickClock }, opts = {}) {
     const mergedOpts = merge({}, FLOW_LINE_DEFAULT_OPTS, opts)
     super(FlowLine.#createGeometry(mergedOpts), FlowLine.#createMaterial(mergedOpts))

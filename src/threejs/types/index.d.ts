@@ -1,1 +1,6 @@
+export * from './DiffusionRing.d.ts'
+export * from './FlowLine.d.ts'
+export * from './FlowLineGroup.d.ts'
 export * from './Grid.d.ts'
+export * from './MapLabel.d.ts'
+export * from './Plane.d.ts'

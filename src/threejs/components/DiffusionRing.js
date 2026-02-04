@@ -11,6 +11,11 @@ const DIFFUSION_RINGING = {
 
 export class DiffusionRing extends Mesh {
   #opts = {}
+  /**
+   * 扩散环组件
+   * @param {*} param0 时钟对象
+   * @param {import('../types').DiffusionRingOpts} opts 配置项
+   */
   constructor({ tickClock }, opts = {}) {
     const mergedOpts = merge({}, DIFFUSION_RINGING, opts)
     super(
