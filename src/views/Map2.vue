@@ -38,14 +38,6 @@ onMounted(() => {
     shapeColor: 0x2a5f8a,
     pointSize: 0.1,
     pointColor: 0x154d7d,
-    position: new Vector3(0, 0.3, 0),
-    scan: {
-      enabled: true,
-      color: 0xffffff,
-      width: 0.5,
-      bumpHeight: 0.5,
-      speed: 0.5,
-    },
   })
   grid.rotation.x = -Math.PI / 2
 
