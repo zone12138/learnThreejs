@@ -1,4 +1,5 @@
 import { Vector3, MeshBasicMaterial, PlaneGeometry, Mesh } from 'three'
+import merge from 'lodash-es/merge'
 import { getV3Position } from '../utils/index.js'
 
 const PLANE_DEFAULT_OPTS = {
@@ -12,30 +13,27 @@ const PLANE_DEFAULT_OPTS = {
     opacity: 1,
     depthTest: true,
   }),
+  renderOrder: 0,
+  autoAddToScene: true,
 }
 
-export class Plane {
+export class Plane extends Mesh {
+  #opts = {}
   constructor({ scene, tickClock }, opts = {}) {
-    this.scene = scene
-    this.tickClock = tickClock
-    this.opts = Object.assign({}, PLANE_DEFAULT_OPTS, opts)
-    return this.init()
-  }
-  init() {
-    const { width, scale, material, position } = this.opts
-    const geometry = new PlaneGeometry(width, width)
-    const mesh = new Mesh(geometry, material)
-    mesh.scale.set(scale, scale, scale)
-    mesh.position.copy(getV3Position(position))
-    this.instance = mesh
-    this.scene?.add(mesh)
+    const mergedOpts = merge({}, PLANE_DEFAULT_OPTS, opts)
+    super(new PlaneGeometry(mergedOpts.width, mergedOpts.width), mergedOpts.material)
+    this.#opts = mergedOpts
+    this.renderOrder = mergedOpts.renderOrder
+    this.scale.set(mergedOpts.scale, mergedOpts.scale, mergedOpts.scale)
+    this.position.copy(getV3Position(mergedOpts.position))
 
-    this.tickClock?.onTick(() => this.update())
-    return mesh
-  }
-  update() {
-    if (this.opts.autoRotate) {
-      this.instance.rotation.z += this.opts.rotateSpeed
+    this.userData.update = () => {
+      if (this.#opts.autoRotate) {
+        this.rotation.z += this.#opts.rotateSpeed
+      }
     }
+    tickClock?.onTick(() => this.userData.update())
+
+    if (mergedOpts.autoAddToScene) scene?.add(this)
   }
 }

@@ -108,8 +108,8 @@ onMounted(() => {
     speed: 0.002,
     renderOrder: 10,
   })
-  diffusionRing.instance.rotation.x = -Math.PI / 2
-  map.scene.add(diffusionRing.instance)
+  diffusionRing.rotation.x = -Math.PI / 2
+  map.scene.add(diffusionRing)
   console.log(map.scene)
 
   const axesHelper = new AxesHelper(100)

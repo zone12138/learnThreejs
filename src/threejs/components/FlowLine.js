@@ -33,45 +33,36 @@ const FLOW_LINE_DEFAULT_OPTS = {
   },
 }
 
-export class FlowLine {
+export class FlowLine extends Mesh {
+  #opts = {}
   constructor({ tickClock }, opts = {}) {
-    this.tickClock = tickClock
-    this.opts = merge({}, FLOW_LINE_DEFAULT_OPTS, opts)
-    this.texture = this.opts.materialOpts.map?.clone()
-    this.line = this.init()
-    this.tickClock?.onTick(() => this.update())
-    return {
-      instance: this.line,
-      update: () => this.update(),
+    const mergedOpts = merge({}, FLOW_LINE_DEFAULT_OPTS, opts)
+    super(FlowLine.#createGeometry(mergedOpts), FlowLine.#createMaterial(mergedOpts))
+    this.#opts = mergedOpts
+    this.renderOrder = this.#opts.renderOrder
+    this.userData.update = () => {
+      if (this.material.map?.isTexture) this.material.map.offset.x += this.#opts.speed
     }
+    tickClock?.onTick(() => this.userData.update())
   }
-  init() {
-    const {
-      textureRepeat,
-      points,
-      tubularSegments,
-      radius,
-      radiusSegments,
-      closed,
-      materialOpts,
-      renderOrder,
-    } = this.opts
-    if (this.texture?.isTexture) {
-      this.texture.wrapT = this.texture.wrapS = RepeatWrapping
-      this.texture.repeat.set(...textureRepeat)
-    }
+
+  static #createGeometry(opts) {
+    const { points, tubularSegments, radius, radiusSegments, closed } = opts
     const path = new CatmullRomCurve3(points)
-    const geometry = new TubeGeometry(path, tubularSegments, radius, radiusSegments, closed)
-    const material = new MeshBasicMaterial({
-      ...materialOpts,
-      map: this.texture,
-      alphaMap: this.texture,
-    })
-    const line = new Mesh(geometry, material)
-    line.renderOrder = renderOrder
-    return line
+    return new TubeGeometry(path, tubularSegments, radius, radiusSegments, closed)
   }
-  update() {
-    if (this.texture?.isTexture) this.texture.offset.x += this.opts.speed
+
+  static #createMaterial(opts) {
+    const { textureRepeat, materialOpts } = opts
+    const cloneTexture = materialOpts?.map?.clone()
+    if (cloneTexture?.isTexture) {
+      cloneTexture.wrapT = cloneTexture.wrapS = RepeatWrapping
+      cloneTexture.repeat.set(...textureRepeat)
+    }
+    return new MeshBasicMaterial({
+      ...materialOpts,
+      map: cloneTexture,
+      alphaMap: cloneTexture,
+    })
   }
 }

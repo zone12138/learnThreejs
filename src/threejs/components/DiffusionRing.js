@@ -9,22 +9,27 @@ const DIFFUSION_RINGING = {
   renderOrder: 10, // 渲染顺序
 }
 
-export class DiffusionRing {
+export class DiffusionRing extends Mesh {
+  #opts = {}
   constructor({ tickClock }, opts = {}) {
-    this.tickClock = tickClock
-    this.opts = merge({}, DIFFUSION_RINGING, opts)
-    this.tickClock?.onTick(() => this.update())
-    this.instance = this.init()
-    return {
-      instance: this.instance,
-      update: () => this.update(),
-    }
-  }
-  init() {
-    const { radius, color, ringWidth, renderOrder } = this.opts
-    const geometry = new PlaneGeometry(radius * 2, radius * 2)
+    const mergedOpts = merge({}, DIFFUSION_RINGING, opts)
+    super(
+      new PlaneGeometry(mergedOpts.radius * 2, mergedOpts.radius * 2),
+      DiffusionRing.#createMaterial(mergedOpts),
+    )
+    this.#opts = mergedOpts
 
-    const material = new ShaderMaterial({
+    this.renderOrder = mergedOpts.renderOrder
+    this.userData.update = () => {
+      const { speed } = this.#opts
+      this.material.uniforms.uTime.value += speed
+    }
+    tickClock?.onTick(() => this.userData.update())
+  }
+
+  static #createMaterial(opts) {
+    const { color, ringWidth } = opts
+    return new ShaderMaterial({
       uniforms: {
         uColor: { value: new Color(color) },
         uTime: { value: 0 },
@@ -64,12 +69,5 @@ export class DiffusionRing {
         }
       `,
     })
-    const mesh = new Mesh(geometry, material)
-    mesh.renderOrder = renderOrder
-    return mesh
-  }
-  update() {
-    const { speed } = this.opts
-    if (this.instance) this.instance.material.uniforms.uTime.value += speed
   }
 }

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>class - test</title>
+  </head>
+  <body>
+    <div id="mapCanvas"></div>
+    <script>
+      class A {
+        constructor() {
+          this.a = 10
+          this.#b = 20
+        }
+        #b = 20
+      }
+
+      class B extends A {
+        constructor() {
+          super()
+        }
+        #b = 40
+        #c = 30
+      }
+
+      const b = new B()
+      console.log(b.a)
+      console.log(B.#b)
+    </script>
+  </body>
+</html>

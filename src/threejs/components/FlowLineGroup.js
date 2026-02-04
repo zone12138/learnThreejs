@@ -15,22 +15,23 @@ const FLG_DEFAULT_OPTS = {
   flowLineOpts: {},
 }
 
-export class FlowLineGroup {
+export class FlowLineGroup extends Group {
+  #opts = {}
+  #flowLineList = []
   constructor({ tickClock }, opts = {}) {
-    this.tickClock = tickClock
-    this.opts = merge({}, FLG_DEFAULT_OPTS, opts)
-    this.projection = getMercatorProjection(this.opts.projection)
-    this.flowLineList = []
-    this.init()
-    return {
-      instance: this.flowLineGroup,
-      update: () => this.update(),
+    super()
+    this.#opts = merge({}, FLG_DEFAULT_OPTS, opts)
+    this.#init({ tickClock }, this.#opts)
+
+    this.userData.update = () => {
+      this.#flowLineList.forEach((flowLine) => flowLine.userData.update())
     }
+    tickClock?.onTick(() => this.userData.update())
   }
-  init() {
-    const { data, filter, depth, flowLineOpts } = this.opts
+  #init({ tickClock }, opts) {
+    const { data, projection, filter, depth, flowLineOpts } = opts
     if (!data) return console.warn('data is null, create flow line group failed')
-    this.flowLineGroup = new Group()
+    const mercatorProjection = getMercatorProjection(projection)
     const outline = getUnion(data, { type: 'feature' })
     const { geometry = {} } = outline ?? {}
     const { coordinates = [], type } = geometry
@@ -40,16 +41,13 @@ export class FlowLineGroup {
     polygens?.forEach((polygon) => {
       // 转换坐标
       const points = polygon.map((coord) => {
-        const [x, y] = this.projection(coord)
+        const [x, y] = mercatorProjection(coord)
         return new Vector3(x, -y, depth)
       })
-      const flowLine = new FlowLine({ tickClock: this.tickClock }, { ...flowLineOpts, points })
-      this.flowLineGroup.add(flowLine.instance)
+      const flowLine = new FlowLine({ tickClock }, { ...flowLineOpts, points })
+      this.add(flowLine)
       // 如果有tickClock，就不添加到列表中；否则，添加到列表中，后续手动执行update方法更新
-      if (!this.tickClock) this.flowLineList.push(flowLine)
+      if (!tickClock) this.#flowLineList.push(flowLine)
     })
-  }
-  update() {
-    this.flowLineList.forEach((flowLine) => flowLine.update())
   }
 }

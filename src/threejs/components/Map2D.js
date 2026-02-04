@@ -74,9 +74,9 @@ export class Map2D {
     this.createGroundMap()
     if (flowLine.show) {
       this.flowLineGroup = this.createFlowLineGroup()
-      this.flowLineGroup.instance.name = `${NAME}-FlowLineGroup`
-      this.flowLineGroup.instance.renderOrder = renderOrder // 要保证flowLine不被遮挡
-      this.group.add(this.flowLineGroup.instance)
+      this.flowLineGroup.name = `${NAME}-FlowLineGroup`
+      this.flowLineGroup.renderOrder = renderOrder + 10 // 要保证flowLine不被遮挡
+      this.group.add(this.flowLineGroup)
     }
     if (autoAddToScene) this.scene.add(this.group)
   }

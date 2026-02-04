@@ -36,18 +36,26 @@ const GRID_DEFAULT_OPTS = {
   autoAddToScene: true,
 }
 
-export class Grid {
+export class Grid extends Group {
+  #opts = {}
+  #uniforms = {}
   constructor({ scene, tickClock }, opts = {}) {
-    this.scene = scene
-    this.tickClock = tickClock
-    this.opts = merge({}, GRID_DEFAULT_OPTS, opts)
+    super()
+    this.#opts = merge({}, GRID_DEFAULT_OPTS, opts)
 
+    this.userData.update = (elapsedTime = 0) => {
+      const { scan, gridSize } = this.#opts
+      if (!scan.enabled) return
+      // 让半径在 0 到 gridSize 之间循环，模拟单次扫光
+      this.#uniforms.uRadius.value = (elapsedTime * scan.speed) % (gridSize + scan.width)
+    }
+    this.#init()
+
+    if (this.#opts.autoAddToScene) scene?.add(this)
     // 接收 tickClock 回调 (delta, elapsedTime)
-    this.tickClock.onTick((_, elapsedTime) => {
-      this.update(elapsedTime)
+    tickClock?.onTick((_, elapsedTime) => {
+      this.userData.update(elapsedTime)
     })
-
-    return this.init()
   }
 
   // 核心：单次扩散 Shader
@@ -73,17 +81,17 @@ export class Grid {
 
         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
         #ifdef IS_POINTS
-          gl_PointSize = ${this.opts.pointSize.toFixed(2)} * (300.0 / -mvPosition.z);
+          gl_PointSize = ${this.#opts.pointSize.toFixed(2)} * (300.0 / -mvPosition.z);
         #endif
         gl_Position = projectionMatrix * mvPosition;
       }
     `
   }
 
-  init() {
-    const { scan, pointColor, position, name, autoAddToScene } = this.opts
+  #init() {
+    const { scan, pointColor, position, name } = this.#opts
 
-    this.uniforms = {
+    this.#uniforms = {
       uScanEnabled: { value: scan.enabled },
       uColor: { value: new Color(scan.color) },
       uRadius: { value: 0.0 },
@@ -93,24 +101,21 @@ export class Grid {
       uBaseColor: { value: new Color(pointColor) },
     }
 
-    const group = new Group()
-    group.name = name
-    group.add(this.createShapes(), this.createAnimatedPoints())
-    group.position.copy(getV3Position(position))
-    if (autoAddToScene) this.scene?.add(group)
-    group.userData.update = this.update.bind(this)
-    return group
+    this.name = name
+    this.add(this.#createShapes(), this.#createAnimatedPoints())
+    this.position.copy(getV3Position(position))
   }
 
-  createAnimatedPoints() {
-    const { gridSize, pointLayout } = this.opts
-    const positions = new Float32Array(pointLayout.row * pointLayout.col * 3)
-    for (let i = 0; i < pointLayout.row; i++) {
-      for (let j = 0; j < pointLayout.col; j++) {
-        const idx = (i * pointLayout.col + j) * 3
-        positions[idx] = (i / (pointLayout.row - 1)) * gridSize - gridSize / 2
+  #createAnimatedPoints() {
+    const { gridSize, pointLayout } = this.#opts
+    const { row, col } = pointLayout
+    const positions = new Float32Array(row * col * 3)
+    for (let i = 0; i < row; i++) {
+      for (let j = 0; j < col; j++) {
+        const idx = (i * col + j) * 3
+        positions[idx] = (i / (row - 1)) * gridSize - gridSize / 2
         positions[idx + 1] = 0
-        positions[idx + 2] = (j / (pointLayout.col - 1)) * gridSize - gridSize / 2
+        positions[idx + 2] = (j / (col - 1)) * gridSize - gridSize / 2
       }
     }
     const geometry = new BufferGeometry()
@@ -119,7 +124,7 @@ export class Grid {
     return new Points(
       geometry,
       new ShaderMaterial({
-        uniforms: this.uniforms,
+        uniforms: this.#uniforms,
         transparent: true,
         defines: { IS_POINTS: true },
         vertexShader: this.sharedVertexShader,
@@ -137,14 +142,14 @@ export class Grid {
     )
   }
 
-  createShapes() {
-    const { gridSize, gridDivision, shapeSize } = this.opts
+  #createShapes() {
+    const { gridSize, gridDivision, shapeSize } = this.#opts
     const shapeSpace = gridSize / gridDivision
     const range = gridSize / 2
     const shapeGeometries = []
     for (let i = 0; i <= gridDivision; i++) {
       for (let j = 0; j <= gridDivision; j++) {
-        const g = this.createPlus(shapeSize)
+        const g = this.#createPlus(shapeSize)
         g.rotateX(-Math.PI / 2)
         g.translate(-range + i * shapeSpace, 0.05, -range + j * shapeSpace)
         shapeGeometries.push(g)
@@ -153,7 +158,7 @@ export class Grid {
     return new Mesh(
       mergeGeometries(shapeGeometries),
       new ShaderMaterial({
-        uniforms: this.uniforms,
+        uniforms: this.#uniforms,
         side: DoubleSide,
         transparent: true,
         vertexShader: this.sharedVertexShader,
@@ -170,7 +175,7 @@ export class Grid {
     )
   }
 
-  createPlus(s = 1) {
+  #createPlus(s = 1) {
     let w = s / 8,
       h = s / 2
     let shape = new Shape([
@@ -188,13 +193,5 @@ export class Grid {
       new Vector2(-h, w),
     ])
     return new ShapeGeometry(shape)
-  }
-
-  update(elapsedTime = 0) {
-    const { scan } = this.opts
-    if (!scan.enabled) return
-    // 让半径在 0 到 gridSize 之间循环，模拟单次扫光
-    const maxRadius = this.opts.gridSize
-    this.uniforms.uRadius.value = (elapsedTime * scan.speed) % (maxRadius + scan.width)
   }
 }
