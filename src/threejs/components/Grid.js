@@ -39,6 +39,14 @@ const GRID_DEFAULT_OPTS = {
 export class Grid extends Group {
   #opts = {}
   #uniforms = {}
+
+  /**
+   * 创建一个 Grid 实例
+   * @param {Object} context - 上下文对象
+   * @param {import('three').Scene} context.scene - 场景
+   * @param {Object} context.tickClock - 时钟实例
+   * @param {import('../types').GridOpts} opts - 网格选项
+   */
   constructor({ scene, tickClock }, opts = {}) {
     super()
     this.#opts = merge({}, GRID_DEFAULT_OPTS, opts)
