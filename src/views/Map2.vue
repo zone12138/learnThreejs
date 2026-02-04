@@ -14,7 +14,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { TextureLoader, Vector3, AxesHelper } from 'three'
 import { simplify } from '@turf/turf'
 import { BasicThreejs } from '@/threejs/core'
-import { Map2D } from '@/threejs/components/index'
+import { Map2D, Grid } from '@/threejs/components/index'
 import { getFeatureCoordinates } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
 
