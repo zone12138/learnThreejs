@@ -17,10 +17,12 @@ const FLG_DEFAULT_OPTS = {
 }
 
 export class FlowLineGroup extends Group {
+  /** @type {import('../types').FlowLineGroupOpts} */
   #opts = {}
+  /** @type {FlowLine[]} */
   #flowLineList = []
   /**
-   * 
+   *
    * @param {*} param0 时钟对象
    * @param {import('../types').FlowLineGroupOpts} opts 配置项
    */
@@ -34,6 +36,10 @@ export class FlowLineGroup extends Group {
     }
     tickClock?.onTick(() => this.userData.update())
   }
+  /**
+   * 初始化
+   * @param {import('../types').FlowLineGroupOpts} opts 配置项
+   */
   #init({ tickClock }, opts) {
     const { data, projection, filter, depth, flowLineOpts } = opts
     if (!data) return console.warn('data is null, create flow line group failed')

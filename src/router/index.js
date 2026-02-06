@@ -43,6 +43,16 @@ const router = createRouter({
       name: 'map2',
       component: () => import('../views/Map2.vue'),
     },
+    {
+      path: '/map3',
+      name: 'map3',
+      component: () => import('../views/Map3.vue'),
+    },
+    {
+      path: '/demo4',
+      name: 'CameraDemo',
+      component: () => import('../views/Demo4Camera.vue'),
+    },
   ],
 })
 

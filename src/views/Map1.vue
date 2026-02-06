@@ -122,12 +122,12 @@ onMounted(() => {
     },
   })
 
-  tl.to(map.camera.instance.position, {
+  tl.to(map.camera.position, {
     x: 0,
     y: 10,
     z: 12,
     onUpdate: () => {
-      map.camera.update()
+      map.controls.update()
     },
   })
 

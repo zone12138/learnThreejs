@@ -29,6 +29,7 @@ const GRID_DEFAULT_OPTS = {
   pointLayout: { row: 200, col: 200 }, // 密度决定3D平滑度
   scan: {
     enabled: true, // 是否开启扫光效果(布尔值)
+    center: new Vector3(0, 0, 0), // 扫光3D中心
     color: 0x00ffff, // 扫光颜色
     width: 5.0, // 光圈本身的宽度(浮点数)
     bumpHeight: 0.2, // 凸起高度(浮点数)
@@ -38,6 +39,7 @@ const GRID_DEFAULT_OPTS = {
 }
 
 export class Grid extends Group {
+  /** @type {import('../types').GridOpts} */
   #opts = {}
   #uniforms = {}
 
@@ -98,7 +100,7 @@ export class Grid extends Group {
   }
 
   #init() {
-    const { scan, pointColor, position, name } = this.#opts
+    const { scan, pointColor, shapeColor, position, name } = this.#opts
 
     this.#uniforms = {
       uScanEnabled: { value: scan.enabled },
@@ -106,8 +108,9 @@ export class Grid extends Group {
       uRadius: { value: 0.0 },
       uWidth: { value: scan.width },
       uBumpHeight: { value: scan.bumpHeight },
-      uCenter: { value: getV3Position(position) },
-      uBaseColor: { value: new Color(pointColor) },
+      uCenter: { value: getV3Position(scan.center) },
+      uPointColor: { value: new Color(pointColor) },
+      uShapeColor: { value: new Color(shapeColor) },
     }
 
     this.name = name
@@ -140,11 +143,10 @@ export class Grid extends Group {
         fragmentShader: `
         varying float vHeight;
         uniform vec3 uColor;
-        uniform vec3 uBaseColor;
+        uniform vec3 uPointColor;
         void main() {
-          vec3 baseColor = uBaseColor;
-          vec3 finalColor = mix(baseColor, uColor, vHeight);
-          gl_FragColor = vec4(finalColor, 0.4 + vHeight * 0.6);
+          vec3 finalColor = mix(uPointColor, uColor, vHeight);
+          gl_FragColor = vec4(finalColor, 0.5 + vHeight * 0.5);
         }
       `,
       }),
@@ -174,9 +176,9 @@ export class Grid extends Group {
         fragmentShader: `
         varying float vHeight;
         uniform vec3 uColor;
+        uniform vec3 uShapeColor;
         void main() {
-          vec3 baseColor = vec3(0.4, 0.45, 1);
-          vec3 finalColor = mix(baseColor, uColor, vHeight);
+          vec3 finalColor = mix(uShapeColor, uColor, vHeight);
           gl_FragColor = vec4(finalColor, 0.5 + vHeight * 0.5);
         }
       `,

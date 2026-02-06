@@ -1,10 +1,10 @@
-import { Color } from 'three'
+import type { ColorRepresentation } from 'three'
 
 export interface DiffusionRingOpts {
   /**
    * 扩散环颜色
    */
-  color?: Color
+  color?: ColorRepresentation
   /**
    * 扩散环半径
    */

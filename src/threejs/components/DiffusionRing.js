@@ -11,6 +11,7 @@ const DIFFUSION_RINGING = {
 }
 
 export class DiffusionRing extends Mesh {
+  /** @type {import('../types').DiffusionRingOpts} */
   #opts = {}
   /**
    * 扩散环组件
@@ -32,7 +33,11 @@ export class DiffusionRing extends Mesh {
     }
     tickClock?.onTick(() => this.userData.update())
   }
-
+  /**
+   * 创建材质
+   * @param {import('../types').DiffusionRingOpts} opts 配置项
+   * @returns {import('three').ShaderMaterial} 扩散环材质
+   */
   static #createMaterial(opts) {
     const { color, ringWidth } = opts
     return new ShaderMaterial({

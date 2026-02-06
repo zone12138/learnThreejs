@@ -2,6 +2,7 @@
 export * from './DiffusionRing'
 export * from './FlowLine'
 export * from './FlowLineGroup'
+export * from './FlyLine'
 export * from './Grid'
 export * from './Map2D'
 export * from './Map3D'

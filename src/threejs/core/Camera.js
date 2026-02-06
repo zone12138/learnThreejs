@@ -1,7 +1,8 @@
 import { CameraHelper, PerspectiveCamera, Vector3 } from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import merge from 'lodash-es/merge'
 import { getV3Position } from '../utils/index'
 
+/** @type {import('../types').CameraOpts} */
 const CAMERA_DEFAULT_OPTS = {
   position: new Vector3(0, 0, 5), // 相机位置
   // 相机选项
@@ -11,39 +12,30 @@ const CAMERA_DEFAULT_OPTS = {
   helper: false, // 是否添加相机辅助线
 }
 
-export class Camera {
-  constructor({ sizes, scene, canvas }, opts = {}) {
-    this.sizes = sizes
-    this.scene = scene
-    this.canvas = canvas
-    this.opts = Object.assign({}, CAMERA_DEFAULT_OPTS, opts)
-    this.init()
-  }
-  init() {
-    const aspectRatio = this.sizes.width / this.sizes.height
-    const { fov, near, far, position } = this.opts
-    this.instance = new PerspectiveCamera(fov, aspectRatio, near, far)
-    this.instance.position.copy(getV3Position(position))
-    this.scene.add(this.instance)
+export class Camera extends PerspectiveCamera {
+  /**
+   *
+   * @param {*} param0
+   * @param {import('../types').CameraOpts} opts 配置项
+   */
+  constructor({ sizes, scene }, opts = {}) {
+    const mergedOpts = merge({}, CAMERA_DEFAULT_OPTS, opts)
+    const aspectRatio = sizes.width / sizes.height
+    const { fov, near, far, position, helper } = mergedOpts
+    super(fov, aspectRatio, near, far)
+    this.position.copy(getV3Position(position))
 
-    if (this.opts.helper) {
-      const helper = new CameraHelper(this.instance)
-      this.scene.add(helper)
+    if (helper) {
+      const helper = new CameraHelper(this)
+      scene.add(helper)
     }
 
-    this.controls = new OrbitControls(this.instance, this.canvas)
-    this.controls.enableDamping = true
-    this.controls.update()
-  }
-  resize() {
-    const aspectRatio = this.sizes.width / this.sizes.height
-    this.instance.aspect = aspectRatio
-    this.instance.updateProjectionMatrix()
-  }
-  update() {
-    this.controls.update()
-  }
-  destroy() {
-    this.controls.dispose()
+    sizes.onResize(({ width, height }) => {
+      if (width == null || height == null) return console.warn('width or height is empty')
+      this.aspect = width / height
+      this.updateProjectionMatrix()
+    })
+
+    scene.add(this)
   }
 }

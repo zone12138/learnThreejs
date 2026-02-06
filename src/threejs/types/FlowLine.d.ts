@@ -1,4 +1,4 @@
-import { Vector3, MeshBasicMaterialParameters } from 'three'
+import type { Vector3, MeshBasicMaterialParameters } from 'three'
 
 export interface FlowLineOpts {
   /**
@@ -14,7 +14,7 @@ export interface FlowLineOpts {
    */
   tubularSegments: number
   /**
-   * 管子半径
+   * 管子半径 - 流光线段宽度(浮点数 float)
    */
   radius: number
   /**
@@ -32,9 +32,9 @@ export interface FlowLineOpts {
   /**
    * 纹理重复次数
    */
-  textureRepeat: [number, number],
+  textureRepeat: [number, number]
   /**
    * 材质
    */
-  materialOpts: MeshBasicMaterialParameters,
+  materialOpts: MeshBasicMaterialParameters
 }

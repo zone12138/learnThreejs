@@ -16,9 +16,9 @@ const FLOW_LINE_TEXTURE = new TextureLoader().load(flowline)
 const FLOW_LINE_DEFAULT_OPTS = {
   points: [], // 基础路径点 (Vector3 数组)
   speed: 0.002, // 流动速度
-  tubularSegments: 2560, // 管子分段数
+  tubularSegments: 1600, // 管子分段数
   radius: 0.02, // 管子半径
-  radiusSegments: 40, // 半径分段数
+  radiusSegments: 8, // 半径分段数
   closed: false, // 是否闭合
   renderOrder: 10, // 渲染顺序
   textureRepeat: [1, 1], // 纹理重复次数
@@ -35,9 +35,10 @@ const FLOW_LINE_DEFAULT_OPTS = {
 }
 
 export class FlowLine extends Mesh {
+  /** @type {import('../types').FlowLineOpts} */
   #opts = {}
   /**
-   * 
+   *
    * @param {*} param0 时钟对象
    * @param {import('../types').FlowLineOpts} opts 配置项
    */
@@ -51,13 +52,22 @@ export class FlowLine extends Mesh {
     }
     tickClock?.onTick(() => this.userData.update())
   }
-
+  /**
+   * 创建几何体
+   * @param {import('../types').FlowLineOpts} opts 配置项
+   * @returns {import('three').TubeGeometry} 管子几何体
+   */
   static #createGeometry(opts) {
     const { points, tubularSegments, radius, radiusSegments, closed } = opts
     const path = new CatmullRomCurve3(points)
+    console.log(path.getLength())
     return new TubeGeometry(path, tubularSegments, radius, radiusSegments, closed)
   }
-
+  /**
+   * 创建材质
+   * @param {import('../types').FlowLineOpts} opts 配置项
+   * @returns {import('three').MeshBasicMaterial} 管子材质
+   */
   static #createMaterial(opts) {
     const { textureRepeat, materialOpts } = opts
     const cloneTexture = materialOpts?.map?.clone()

@@ -14,7 +14,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { TextureLoader, Vector3, AxesHelper } from 'three'
 import { simplify } from '@turf/turf'
 import { BasicThreejs } from '@/threejs/core'
-import { Map2D, Grid, FlowLine } from '@/threejs/components/index'
+import { Map2D, Grid, FlowLine, FlyLine } from '@/threejs/components/index'
 import { getFeatureCoordinates } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
 
@@ -33,11 +33,8 @@ onMounted(() => {
   const grid = new Grid(map, {
     gridSize: 50,
     gridDivision: 20,
-    gridColor: 0x1b4b70,
     shapeSize: 0.5,
-    shapeColor: 0x2a5f8a,
     pointSize: 0.1,
-    pointColor: 0x154d7d,
   })
   grid.rotation.x = -Math.PI / 2
 
@@ -58,6 +55,20 @@ onMounted(() => {
   })
 
   console.log(map2D)
+
+  const start = new Vector3(-10, 10, 0) // 起点
+  const end = new Vector3(10, 0, 0) // 终点
+  const flyLine = new FlyLine(map, {
+    start,
+    end,
+    color: 0x00ff00, // 绿色
+    height: 8, // 弧线高度
+    speed: 0.2, // 飞行速度
+    radius: 0.02, // 粗细
+    length: 0.5, // 线段长度占比
+  })
+
+  map.scene.add(flyLine)
 
   const polygons = getFeatureCoordinates(mapSimplified, { filter: [0, 9] })
 

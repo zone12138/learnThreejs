@@ -1,4 +1,4 @@
-import { Color, Group, Scene } from 'three'
+import type { ColorRepresentation } from 'three'
 import { Vector3LikeOrTuple } from './Variable'
 
 export interface ScanOpts {
@@ -7,10 +7,14 @@ export interface ScanOpts {
    */
   enabled?: boolean
   /**
+   * 扫光3D中心
+   */
+  center?: Vector3LikeOrTuple
+  /**
    * 扫光颜色
    * @example 0xffffff
    */
-  color?: Color
+  color?: ColorRepresentation
   /**
    * 扫光宽度(浮点数 float)
    */
@@ -49,7 +53,7 @@ export interface GridOpts {
   /**
    * 网格形状颜色
    */
-  shapeColor?: Color
+  shapeColor?: ColorRepresentation
   /**
    * 网格点大小
    */
@@ -57,7 +61,7 @@ export interface GridOpts {
   /**
    * 网格点颜色
    */
-  pointColor?: Color
+  pointColor?: ColorRepresentation
   /**
    * 网格点布局
    */
