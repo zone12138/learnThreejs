@@ -13,11 +13,11 @@ const BASIC_DEFAULT_OPTS = {
 
 export class BasicThreejs {
   constructor(canvas, opts = {}) {
-    this.opts = merge({}, BASIC_DEFAULT_OPTS, opts)
+    const options = merge({}, BASIC_DEFAULT_OPTS, opts)
     this.canvas = canvas
     this.scene = new Scene()
     this.sizes = new Size(this)
-    this.camera = new Camera(this, this.opts.cameraOpts)
+    this.camera = new Camera(this, options.cameraOpts)
     this.renderer = new Renderer(this)
     this.tickClock = new TickClock()
 
@@ -26,7 +26,7 @@ export class BasicThreejs {
     this.controls.update()
 
     this.interactionManager = null
-    if (this.opts.useInteraction) {
+    if (options.useInteraction) {
       this.interactionManager = new InteractionManager(this.renderer, this.camera, canvas)
     }
 
@@ -56,14 +56,17 @@ export class BasicThreejs {
           }
         }
         child?.material?.dispose?.()
+      } else if (child.isHelper) {
+        // 销毁所有辅助对象，包括 CameraHelper
+        child?.dispose?.()
       }
     })
     this.canvas.parentNode.removeChild(this.canvas)
 
     this.scene = null
+    this.renderer = null
     this.camera = null
     this.controls = null
-    this.renderer = null
     this.tickClock = null
     this.sizes = null
     this.canvas = null

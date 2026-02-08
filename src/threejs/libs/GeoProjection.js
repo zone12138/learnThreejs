@@ -1,4 +1,3 @@
-import { Vector2 } from 'three'
 import { geoMercator } from 'd3-geo'
 import {
   union,
