@@ -25,7 +25,7 @@ let map = null
 onMounted(() => {
   map = new BasicThreejs(mapCanvas.value, {
     cameraOpts: {
-      helper: true,
+      helper: false,
       position: new Vector3(0, 0, 25),
     },
   })
@@ -56,8 +56,8 @@ onMounted(() => {
 
   console.log(map2D)
 
-  const start = new Vector3(-10, 10, 0) // 起点
-  const end = new Vector3(10, 0, 0) // 终点
+  const start = new Vector3(0, 1, 0) // 起点
+  const end = new Vector3(10, 1, 0) // 终点
   const flyLine = new FlyLine(map, {
     start,
     end,
@@ -65,15 +65,12 @@ onMounted(() => {
     height: 8, // 弧线高度
     speed: 0.2, // 飞行速度
     radius: 0.02, // 粗细
-    length: 0.5, // 线段长度占比
+    length: 0.2, // 线段长度占比
   })
-
-  map.scene.add(flyLine)
+  flyLine.mesh.rotation.x = Math.PI / 2
+  map.scene.add(flyLine.mesh)
 
   const polygons = getFeatureCoordinates(mapSimplified, { filter: [0, 9] })
-
-  const axesHelper = new AxesHelper(100)
-  map.scene.add(axesHelper)
 })
 onUnmounted(() => {
   map?.destroy()
