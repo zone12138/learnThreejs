@@ -11,10 +11,25 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { TextureLoader, Vector3, AxesHelper } from 'three'
+import {
+  TextureLoader,
+  Vector3,
+  AxesHelper,
+  MeshBasicMaterial,
+  PlaneGeometry,
+  Mesh,
+  DoubleSide,
+} from 'three'
 import { simplify } from '@turf/turf'
 import { BasicThreejs } from '@/threejs/core'
-import { Map2D, Grid, FlowLine, FlyLine } from '@/threejs/components/index'
+import {
+  Map2D,
+  Grid,
+  FlowLine,
+  FlyLine,
+  TextTextureCreator,
+  ReflectTexture,
+} from '@/threejs/components/index'
 import { getFeatureCoordinates } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
 
@@ -69,6 +84,21 @@ onMounted(() => {
   })
   flyLine.mesh.rotation.x = Math.PI / 2
   map.scene.add(flyLine.mesh)
+
+  const reflectTexture = new ReflectTexture({
+    text: '广东省',
+    fontSize: 200,
+    fontFamily: 'Arial',
+    textColor: '#00ffff',
+    shadowColor: 'rgba(0, 255, 255, 0.6)',
+    gap: 20,
+    reflectionOpacity: 0.5,
+  })
+
+  reflectTexture.position.set(0, -8, 0)
+  reflectTexture.rotation.x = Math.PI / 2
+
+  map.scene.add(reflectTexture)
 
   const polygons = getFeatureCoordinates(mapSimplified, { filter: [0, 9] })
 })

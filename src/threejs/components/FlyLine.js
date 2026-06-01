@@ -71,7 +71,6 @@ export class FlyLine {
     // 计算中点并抬高高度，形成弧形
     const middle = new Vector3().addVectors(start, end).multiplyScalar(0.5)
     middle.y += height
-    // middle.z += height
 
     // 创建二次贝塞尔曲线
     return new QuadraticBezierCurve3(start, middle, end)
@@ -97,25 +96,32 @@ export class FlyLine {
         uSpeed: { value: speed },
       },
       transparent: true,
+      depthWrite: false, // 禁用深度写入，避免透明物体渲染问题
       side: DoubleSide,
-      blending: AdditiveBlending, // 关键：使用叠加模式，让颜色像光一样叠加，而不是像颜料一样混合
+      blending: AdditiveBlending, // 使用叠加模式，让颜色像光一样叠加
       vertexShader: `
         varying vec2 vUv;
+        varying vec3 vPosition;
+        varying vec3 vNormal;
         
         void main() {
           vUv = uv;
+          vPosition = position;
+          vNormal = normal;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
         varying vec2 vUv;
+        varying vec3 vPosition;
+        varying vec3 vNormal;
         uniform vec3 uColor;
         uniform float uTime;
         uniform float uLength;
         uniform float uSpeed;
         
         void main() {
-          // 计算流动位置
+          // 计算流动位置（使用 x 方向的 UV 作为流动方向）
           float flowPosition = fract(vUv.x - uTime * uSpeed);
 
           // 只显示流动光带部分
@@ -126,10 +132,24 @@ export class FlyLine {
           // 计算透明度渐变（头部亮，尾部暗）
           float alpha = flowPosition / uLength;
           
-          // 增强头部亮度效果
+          // 增强头部亮度效果（使用幂函数让尾部更暗，头部更亮）
           alpha = pow(alpha, 2.0);
           
-          gl_FragColor = vec4(uColor, alpha);
+          // 添加 3D 立体感：基于法线和视角计算高光
+          vec3 normal = normalize(vNormal);
+          vec3 viewDir = normalize(-vPosition);
+          vec3 reflectDir = reflect(-viewDir, normal);
+          float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+          
+          // 基础颜色 + 高光增强
+          vec3 finalColor = uColor + vec3(spec * 0.5);
+          
+          // 添加流动头部的亮度增强
+          float headGlow = 1.0 - (flowPosition / uLength);
+          headGlow = pow(headGlow, 4.0) * 2.0;
+          finalColor += vec3(headGlow);
+          
+          gl_FragColor = vec4(finalColor, alpha);
         }
       `,
     })
