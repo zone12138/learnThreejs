@@ -97,6 +97,7 @@ export class FlyLine {
       },
       transparent: true,
       depthWrite: false, // 禁用深度写入，避免透明物体渲染问题
+      depthTest: true, // 启用深度测试，确保正确渲染
       side: DoubleSide,
       blending: AdditiveBlending, // 使用叠加模式，让颜色像光一样叠加
       vertexShader: `
@@ -124,18 +125,20 @@ export class FlyLine {
           // 计算流动位置（使用 x 方向的 UV 作为流动方向）
           float flowPosition = fract(vUv.x - uTime * uSpeed);
 
+          float progressAlpha = 0.0;
+
           // 只显示流动光带部分
-          if (flowPosition > uLength) {
-            discard;
+          // if (flowPosition > uLength) {
+          //   discard;
+          // }
+
+          if (flowPosition <= uLength) {
+            // 计算流动透明度渐变（头部亮，尾部暗）
+            progressAlpha = flowPosition / uLength;
+            progressAlpha = pow(progressAlpha, 2.0);
           }
           
-          // 计算透明度渐变（头部亮，尾部暗）
-          float alpha = flowPosition / uLength;
-          
-          // 增强头部亮度效果（使用幂函数让尾部更暗，头部更亮）
-          alpha = pow(alpha, 2.0);
-          
-          // 添加 3D 立体感：基于法线和视角计算高光
+          // 添加 3D 立体感
           vec3 normal = normalize(vNormal);
           vec3 viewDir = normalize(-vPosition);
           vec3 reflectDir = reflect(-viewDir, normal);
@@ -145,18 +148,21 @@ export class FlyLine {
           vec3 finalColor = uColor + vec3(spec * 0.5);
           
           // 添加流动头部的亮度增强
-          float headGlow = 1.0 - (flowPosition / uLength);
-          headGlow = pow(headGlow, 4.0) * 2.0;
-          finalColor += vec3(headGlow);
+          if (flowPosition <= uLength) {
+            float headGlow = 1.0 - (flowPosition / uLength);
+            headGlow = pow(headGlow, 4.0) * 2.0;
+            finalColor += vec3(headGlow);
+          }
           
-          gl_FragColor = vec4(finalColor, alpha);
+          // 最终输出：非光带区域的 progressAlpha 是 0.0，在 Additive 叠加模式下就是完美的纯透明，绝无黑色条状
+          gl_FragColor = vec4(finalColor * progressAlpha, progressAlpha);
         }
       `,
     })
 
     // 创建网格
     const mesh = new Mesh(geometry, material)
-    mesh.renderOrder = 9999
+    mesh.renderOrder = 20
     return mesh
   }
 

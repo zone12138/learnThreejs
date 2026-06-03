@@ -53,6 +53,11 @@ const router = createRouter({
       name: 'CameraDemo',
       component: () => import('../views/Demo4Camera.vue'),
     },
+    {
+      path: '/demo4-heatmap',
+      name: 'HeatmapDemo',
+      component: () => import('../views/Demo4Heatmap.vue'),
+    },
   ],
 })
 

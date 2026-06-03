@@ -27,8 +27,8 @@ import {
   Grid,
   FlowLine,
   FlyLine,
-  TextTextureCreator,
   ReflectTexture,
+  Heatmap3D,
 } from '@/threejs/components/index'
 import { getFeatureCoordinates } from '@/threejs/libs/index'
 import map1Data from '@/geoJson/广东省.json'
@@ -99,6 +99,23 @@ onMounted(() => {
   reflectTexture.rotation.x = Math.PI / 2
 
   map.scene.add(reflectTexture)
+
+  const heatmap3D = new Heatmap3D({
+    projection: {
+      center: [113.280637, 23.125178],
+      scale: 150,
+    },
+    data: Array.from({ length: 10 }, (_, i) => ({
+      x: parseInt(Math.random() * 512),
+      y: parseInt(Math.random() * 512),
+      value: parseInt(Math.random() * 100),
+    })),
+  })
+  heatmap3D.position.z = 0.5
+
+  // heatmap3D.rotation.x = Math.PI / 2
+
+  map.scene.add(heatmap3D)
 
   const polygons = getFeatureCoordinates(mapSimplified, { filter: [0, 9] })
 })
