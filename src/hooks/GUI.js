@@ -1,10 +1,7 @@
 import { GUI } from 'lil-gui'
 import { Color } from 'three'
 
-export function useThreejsGUI(
-  { camera, mesh, material, cameraHelper, renderer, scene },
-  GUIOpts = {},
-) {
+export function useThreejsGUI({ camera, mesh, cameraHelper, scene }, GUIOpts = {}) {
   const { title = 'Three.js 调试面板', width = 400, closeFolders = false } = GUIOpts
   const gui = new GUI({
     title, // 面板标题
@@ -19,7 +16,6 @@ export function useThreejsGUI(
   ]
 
   if (scene) {
-    console.log(scene.background)
     const sceneFolder = gui.addFolder('scene-场景')
     sceneFolder
       .addColor({ color: scene.background?.getHexString() ?? '#000000' }, 'color')
@@ -36,7 +32,6 @@ export function useThreejsGUI(
         .add(camera.position, p, -100, 100, 1)
         .name(`${p}轴位置`)
         .onChange((value) => {
-          console.log(`position.${p}`, value)
           camera.position[p] = value
         })
     })
@@ -58,12 +53,10 @@ export function useThreejsGUI(
         .add(mesh.position, p, -100, 100, 1)
         .name(`${p}轴位置`)
         .onChange((value) => {
-          console.log(`position.${p}`, value)
           mesh.position[p] = value
         })
     })
     // 颜色：适配 Three.js 颜色格式（支持 16 进制/颜色名）
-    console.log(mesh.material.color)
     meshFolder
       .addColor({ color: mesh?.material?.color?.getHexString() ?? '#000000' }, 'color')
       .name('立方体颜色')
@@ -76,13 +69,5 @@ export function useThreejsGUI(
     meshFolder.add(mesh.material, 'opacity', 0, 1, 0.01).name('透明度')
   }
 
-  if (cameraHelper) {
-    const cameraHelperFolder = gui.addFolder('cameraHelper-相机辅助')
-  }
-
-  if (renderer) {
-    const rendererFolder = gui.addFolder('renderer-渲染器')
-  }
-  console.log(gui)
   return gui
 }

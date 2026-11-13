@@ -16,8 +16,11 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import merge from 'lodash-es/merge'
 import { getV3Position } from '../utils/index'
 
-/** @type {import('../types').GridOpts} */
-const GRID_DEFAULT_OPTS = {
+/**
+ * 默认配置工厂：Vector3 等实例每次新生成，避免模块级共享实例被 merge 污染。
+ * @returns {import('../types').GridOpts}
+ */
+const createGridDefaultOpts = () => ({
   name: 'grid',
   position: new Vector3(0, 0, 0),
   gridSize: 100,
@@ -36,7 +39,7 @@ const GRID_DEFAULT_OPTS = {
     speed: 10, // 扫描速度(浮点数)
   },
   autoAddToScene: true,
-}
+})
 
 export class Grid extends Group {
   /** @type {import('../types').GridOpts} */
@@ -45,14 +48,13 @@ export class Grid extends Group {
 
   /**
    * 创建一个 Grid 实例
-   * @param {Object} context - 上下文对象
-   * @param {import('three').Scene} context.scene - 场景
-   * @param {Object} context.tickClock - 时钟实例
+   * @param {Object} basic - BasicThreejs 实例（依赖其 scene / tickClock）
    * @param {import('../types').GridOpts} opts - 网格选项
    */
-  constructor({ scene, tickClock }, opts = {}) {
+  constructor(basic, opts = {}) {
     super()
-    this.#opts = merge({}, GRID_DEFAULT_OPTS, opts)
+    const { scene, tickClock } = basic ?? {}
+    this.#opts = merge({}, createGridDefaultOpts(), opts)
 
     this.userData.update = (elapsedTime = 0) => {
       const { scan, gridSize } = this.#opts

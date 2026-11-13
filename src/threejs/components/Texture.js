@@ -19,9 +19,6 @@ const TEXT_TEXTURE_DEFAULT_OPTS = {
  * 文字纹理创建器 - 用于创建 canvas2D 文字纹理（支持倒影效果）
  */
 export class TextTextureCreator extends CanvasTexture {
-  /** @type {import('../types').TextTextureOpts} */
-  #opts = {}
-
   /**
    * 文字纹理创建器
    * @param {import('../types').TextTextureOpts} opts 配置项
@@ -30,7 +27,6 @@ export class TextTextureCreator extends CanvasTexture {
     const mergedOpts = Object.assign({}, TEXT_TEXTURE_DEFAULT_OPTS, opts)
     const canvas = TextTextureCreator.#createCanvas(mergedOpts)
     super(canvas)
-    this.#opts = mergedOpts
     this.needsUpdate = true
   }
 

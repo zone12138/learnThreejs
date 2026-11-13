@@ -1,11 +1,18 @@
-import { ref, onMounted, onUnmounted, toValue } from 'vue'
+import { computed, onUnmounted, shallowRef, toValue } from 'vue'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { geoMercator } from 'd3-geo'
+import merge from 'lodash-es/merge'
+import { BasicThreejs } from '@/threejs/core'
+import { forEachRing, createRingGeometry } from '@/threejs/utils/geoShape'
 
 const isNonEmptyArray = (arr) => Array.isArray(arr) && arr.length > 0
 
-const MAP_CONFIG = {
+/**
+ * 默认配置工厂：每次调用生成全新对象。
+ * 旧实现把 MAP_CONFIG 放在模块级并被 Object.assign 原地改写，
+ * 多个 use3DMap 实例会互相覆盖配置且无法恢复，故改为局部合并。
+ */
+const createDefaultMapConfig = () => ({
   scene: {
     background: 0x000000,
   },
@@ -22,6 +29,10 @@ const MAP_CONFIG = {
   renderer: {
     antialias: true,
     alpha: true,
+  },
+  controls: {
+    minDistance: 50,
+    maxDistance: 200,
   },
   projection: {
     center: [113.324521, 23.139056],
@@ -57,233 +68,146 @@ const MAP_CONFIG = {
       opacity: 1,
     },
   },
-}
+})
 
-export function use3DMap({
-  container = document.body,
-  groundMapData,
-  mapData,
-  mapConfig = {},
-} = {}) {
-  Object.assign(MAP_CONFIG, mapConfig)
+/**
+ * 3D 地图 Hook（构建于 BasicThreejs 之上）。
+ * 场景/相机/渲染器/控制器/渲染循环/资源回收全部由 BasicThreejs 承担，
+ * 本 hook 只负责：光照、投影、地面与 3D 挤出地图的构建。
+ *
+ * 数据（GeoJSON）通常经 loadGeoJson 异步加载，故初始化由调用方在数据就绪后
+ * 调用 initMap() 触发；卸载时自动销毁。
+ *
+ * @param {Object} params
+ * @param {import('vue').Ref<HTMLCanvasElement>} params.canvas canvas 引用
+ * @param {Object} [params.mapConfig] 配置覆盖项
+ */
+export function use3DMap({ canvas, mapConfig = {} } = {}) {
+  // 配置合并到函数局部对象，不污染模块级常量
+  const config = merge({}, createDefaultMapConfig(), mapConfig)
 
-  let scene, camera, renderer, controls, animationId
-  let groundMapGroup,
-    mapGroup,
-    containerRef,
-    cleanups = []
-  // 初始化投影
-  const projection = geoMercator()
-    .center(MAP_CONFIG.projection.center)
-    .scale(MAP_CONFIG.projection.scale)
-    .translate(MAP_CONFIG.projection.translate)
+  const basic = shallowRef(null)
+  // 对外暴露的都是响应式引用：旧实现返回 onMounted 前求值的 null，永远不可用
+  const groundMapGroup = shallowRef(null)
+  const mapGroup = shallowRef(null)
 
-  // 初始化场景
-  const initScene = () => {
-    const container = containerRef
-    if (!container) return console.error('地图容器不存在')
+  const scene = computed(() => basic.value?.scene ?? null)
+  const camera = computed(() => basic.value?.camera ?? null)
+  const renderer = computed(() => basic.value?.renderer ?? null)
+  const controls = computed(() => basic.value?.controls ?? null)
 
-    // 初始化场景
-    scene = new THREE.Scene()
-    scene.background = new THREE.Color(MAP_CONFIG.scene.background)
+  /**
+   * 初始化（幂等）：创建 BasicThreejs 基座并构建地图。
+   * @param {Object} data
+   * @param {Object} [data.groundMapData] 地面地图 GeoJSON 数据
+   * @param {Object} [data.mapData] 3D 地图 GeoJSON 数据
+   */
+  const initMap = ({ groundMapData, mapData } = {}) => {
+    if (basic.value) return console.warn('use3DMap: 已初始化，如需重建请先 cleanup()')
+    const canvasEl = toValue(canvas)
+    if (!canvasEl) return console.error('use3DMap: canvas 不存在')
 
-    const width = container.clientWidth,
-      height = container.clientHeight
-    // 初始化相机
-    camera = new THREE.PerspectiveCamera(
-      MAP_CONFIG.camera.fov,
-      width / height,
-      MAP_CONFIG.camera.near,
-      MAP_CONFIG.camera.far,
-    )
-    // 相机位置设置
-    camera.position.set(
-      MAP_CONFIG.camera.position.x,
-      MAP_CONFIG.camera.position.y,
-      MAP_CONFIG.camera.position.z,
-    )
-    camera.lookAt(0, 0, 0) // 相机指向场景中心
+    basic.value = new BasicThreejs(canvasEl, {
+      cameraOpts: {
+        fov: config.camera.fov,
+        near: config.camera.near,
+        far: config.camera.far,
+        position: new THREE.Vector3(
+          config.camera.position.x,
+          config.camera.position.y,
+          config.camera.position.z,
+        ),
+      },
+      rendererOpts: {
+        antialias: config.renderer.antialias,
+        alpha: config.renderer.alpha,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.25,
+        shadow: true,
+        clearColor: 0x000000,
+      },
+      controlsOpts: { ...config.controls },
+    })
 
-    // 初始化渲染器
-    renderer = new THREE.WebGLRenderer(MAP_CONFIG.renderer)
-    renderer.setSize(width, height) // 设置渲染器大小
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // 防止高分辨率设备渲染模糊
-    renderer.shadowMap.enabled = true // 开启阴影渲染
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap // 软阴影渲染
-    renderer.toneMapping = THREE.ACESFilmicToneMapping // 色调映射
-    renderer.toneMappingExposure = 1.25 // 曝光调整
-    renderer.outputColorSpace = THREE.SRGBColorSpace // 输出颜色空间
-    renderer.setClearColor(0x000000) // 设置渲染器清除颜色为黑色
-    container.appendChild(renderer.domElement) // 将渲染器的DOM元素添加到地图容器中
-
-    // 初始化轨道控制器
-    controls = new OrbitControls(camera, renderer.domElement)
-    controls.enableDamping = true // 启用阻尼效果
-    controls.dampingFactor = 0.05 // 阻尼系数
-    controls.minDistance = 50 // 最小距离
-    controls.maxDistance = 200 // 最大距离
-    controls.update() // 更新控制器
+    basic.value.scene.background = new THREE.Color(config.scene.background)
+    basic.value.camera.lookAt(0, 0, 0)
 
     setupLights()
-
-    setupGround()
-
-    setup3DMap()
-
-    // 启动动画循环
-    animate()
+    if (groundMapData) setupGround(groundMapData)
+    if (mapData) setup3DMap(mapData)
   }
 
   // 初始化地面
-  const setupGround = () => {
+  const setupGround = (groundMapData) => {
     // 检查是否有有效数据
-    if (!groundMapData || !isNonEmptyArray(groundMapData.features))
-      return console.error('地面地图数据为空或无效')
-    groundMapGroup = createGroundMap(groundMapData, MAP_CONFIG.groundMap)
-    cleanups.push(() => cleanupMap(groundMapGroup))
+    if (!isNonEmptyArray(groundMapData?.features)) return console.error('地面地图数据为空或无效')
+    groundMapGroup.value = createGroundMap(groundMapData, config.groundMap)
   }
 
   // 初始化3D地图
-  const setup3DMap = () => {
-    if (!mapData || !isNonEmptyArray(mapData.features)) return console.error('3D地图数据为空或无效')
-    mapGroup = createGroundMap(mapData, MAP_CONFIG.map)
-    cleanups.push(() => cleanupMap(mapGroup))
+  const setup3DMap = (mapData) => {
+    if (!isNonEmptyArray(mapData?.features)) return console.error('3D地图数据为空或无效')
+    mapGroup.value = createGroundMap(mapData, config.map)
   }
 
   /**
    * 创建地图
    * @param {Object} mapShapeData 地图数据，包含features属性
-   * @param {Object} mapOpts 地图选项，包含extrudeOpts, color, lineOpts
+   * @param {Object} mapOpts 地图选项，包含extrudeOpts, colorList, lineOpts
    * @returns 地图组
    */
   const createGroundMap = (mapShapeData, mapOpts) => {
-    // 初始化地图组
-    const mapGroup = new THREE.Object3D()
-    scene.add(mapGroup) // 将地图组添加到场景中
-    const invalidCoordsCount = [] // 用于收集无效坐标信息
-    const { extrudeOpts, colorList, drawOutline, lineOpts } = mapOpts
+    const scene = basic.value.scene
+    const group = new THREE.Object3D()
+    scene.add(group)
+    const { extrudeOpts, colorList, lineOpts } = mapOpts
 
-    // 遍历地图数据
+    const projection = geoMercator()
+      .center(config.projection.center)
+      .scale(config.projection.scale)
+      .translate(config.projection.translate)
+
     mapShapeData.features.forEach((feature, featureIndex) => {
-      const geometryType = feature.geometry.type
-      const coordinates = feature.geometry.coordinates
-      const cityName = feature.properties.name
-
+      const cityName = feature.properties?.name
       const color = colorList[featureIndex % colorList.length]
 
-      coordinates.forEach((polygon) => {
-        // 处理多边形和多多边形的坐标格式，MultiPolygon比Polygon多一层数组
-        if (geometryType === 'Polygon') polygon = [polygon]
-        // 遍历收集有效坐标
-        polygon.forEach((ring) => {
-          const validCoords = []
-          ring.forEach((coord) => {
-            try {
-              const [x, y] = projection(coord)
-              if (!isNaN(x) && !isNaN(y)) validCoords.push([x, -y])
-            } catch (error) {
-              invalidCoordsCount.push({ geometryType, coord, cityName, errorMsg: error.message }) // 收集无效坐标
-            }
-          })
+      // 环的展平/投影/挤出交给公共构件，Polygon 与 MultiPolygon 不再各写一套
+      forEachRing(feature, (ring) => {
+        let geometry = null
+        try {
+          geometry = createRingGeometry(ring, projection, extrudeOpts)
+        } catch (error) {
+          console.warn('Failed to create shape for', cityName, error)
+          return
+        }
+        if (!geometry) return
 
-          // 创建地图形状网格
-          if (validCoords.length > 2) {
-            try {
-              // 创建形状
-              const shape = new THREE.Shape()
-              validCoords.forEach((coord, i) => {
-                if (i === 0) {
-                  shape.moveTo(coord[0], coord[1])
-                } else {
-                  shape.lineTo(coord[0], coord[1])
-                }
-              })
-              // 确保形状闭合
-              shape.closePath()
-              // 创建拉伸几何体
-              const geometry = new THREE.ExtrudeGeometry(shape, extrudeOpts)
-              // 计算几何体的边界框和球体，用于渲染优化
-              geometry.computeBoundingBox()
-              // 计算几何体的边界球体，用于渲染优化
-              geometry.computeBoundingSphere()
-              // 使用MeshBasicMaterial数组，完全不受光照影响，避免鳞片状反光
-              const materials = [
-                // 正面材质
-                new THREE.MeshStandardMaterial({
-                  color: color,
-                  metalness: 0,
-                  roughness: 0.3,
-                }),
-                // 侧面材质
-                new THREE.MeshStandardMaterial({
-                  color: color,
-                  metalness: 0,
-                  roughness: 0.5,
-                }),
-              ]
+        const materials = [
+          // 正面材质
+          new THREE.MeshStandardMaterial({ color, metalness: 0, roughness: 0.3 }),
+          // 侧面材质
+          new THREE.MeshStandardMaterial({ color, metalness: 0, roughness: 0.5 }),
+        ]
+        const mesh = new THREE.Mesh(geometry, materials)
+        mesh.userData = { originalColor: color, cityName }
 
-              // 创建网格
-              const mesh = new THREE.Mesh(geometry, materials)
-              // 设置网格用户数据，用于后续交互
-              mesh.userData = {
-                originalColor: color,
-                cityName,
-              }
+        // 地图轮廓线
+        if (mapOpts.drawOutline) {
+          const edges = new THREE.EdgesGeometry(geometry)
+          const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial(lineOpts))
+          mesh.add(outline)
+        }
 
-              // 仅在 drawOutline 为 true 时创建轮廓线
-              if (drawOutline) {
-                // 创建区域轮廓线，增强边界清晰度
-                const edges = new THREE.EdgesGeometry(geometry)
-                // 为轮廓线设置颜色，与主网格颜色不同
-                const lineMaterial = new THREE.LineBasicMaterial(lineOpts)
-                // 轮廓线
-                const outline = new THREE.LineSegments(edges, lineMaterial)
-                mesh.add(outline)
-              }
-
-              // 将网格添加到地图组
-              mapGroup.add(mesh)
-            } catch (error) {
-              console.warn('Failed to create shape for ', cityName, ' map feature:', error)
-            }
-          }
-        })
+        group.add(mesh)
       })
     })
 
-    // 打印无效坐标信息
-    if (invalidCoordsCount.length > 0)
-      console.warn('Invalid coordinates for city:', invalidCoordsCount)
-
-    return mapGroup
-  }
-
-  // 清理函数，用于移除地图组和其所有子对象
-  const cleanupMap = (mapGroup) => {
-    if (mapGroup) {
-      scene.remove(mapGroup)
-      mapGroup.traverse((child) => {
-        if (child.geometry) child.geometry.dispose()
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach((mat) => mat.dispose())
-          } else {
-            child.material.dispose()
-          }
-        }
-      })
-    }
-  }
-
-  // 动画循环
-  const animate = () => {
-    animationId = requestAnimationFrame(animate)
-    controls?.update() // 更新控制器
-    renderer?.render(scene, camera) // 渲染场景
+    return group
   }
 
   // 设置光照系统
   const setupLights = () => {
+    const scene = basic.value.scene
     // 环境光
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
     scene.add(ambientLight)
@@ -303,7 +227,7 @@ export function use3DMap({
     // 辅助方向光
     const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3)
     directionalLight2.position.set(-50, -50, 30) // 辅助方向光位置
-    scene.add(directionalLight2) // 添加辅助方向光到场景
+    scene.add(directionalLight2)
 
     // 半球光
     const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x0c0c0c, 0.4)
@@ -311,36 +235,12 @@ export function use3DMap({
     scene.add(hemisphereLight)
   }
 
-  onMounted(() => {
-    console.log('containerRef', containerRef)
-    console.time('initScene')
-    containerRef = toValue(container)
-    initScene()
-    console.timeEnd('initScene')
-  })
-
-  // 清理
+  // 清理：几何体/材质由 BasicThreejs.destroy 统一遍历释放，这里只重置本地引用
   const cleanup = () => {
-    animationId && cancelAnimationFrame(animationId)
-    cleanups.forEach((cleanup) => cleanup())
-
-    // 清理渲染器
-    if (renderer) {
-      renderer.dispose()
-      if (containerRef && renderer.domElement) {
-        containerRef.removeChild(renderer.domElement)
-      }
-    }
-
-    // 重置所有引用
-    groundMapGroup = null
-    mapGroup = null
-    scene = null
-    camera = null
-    renderer = null
-    controls = null
-
-    console.log(groundMapGroup, mapGroup)
+    basic.value?.destroy()
+    basic.value = null
+    groundMapGroup.value = null
+    mapGroup.value = null
   }
 
   onUnmounted(() => {
@@ -348,12 +248,15 @@ export function use3DMap({
   })
 
   return {
+    // 响应式引用：initMap 之后可用
+    basic,
     scene,
     camera,
     renderer,
     controls,
-    animationId,
     groundMapGroup,
+    mapGroup,
+    initMap,
     cleanup,
   }
 }

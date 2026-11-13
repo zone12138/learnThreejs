@@ -1,12 +1,10 @@
 import { geoMercator } from 'd3-geo'
-import {
-  union,
-  featureCollection,
-  centroid,
-  centerOfMass,
-  pointOnFeature,
-  flatten,
-} from '@turf/turf'
+import { union } from '@turf/union'
+import { featureCollection } from '@turf/helpers'
+import { centroid } from '@turf/centroid'
+import { centerOfMass } from '@turf/center-of-mass'
+import { pointOnFeature } from '@turf/point-on-feature'
+import { flatten } from '@turf/flatten'
 
 /** @type {import('../types/Variable').GeoProjectionOpts} */
 const PROJECTION_DEFAULT_CENTER = {
@@ -113,7 +111,7 @@ export const getFeatureCoordinates = (geoJson, opts = { filter: 'all' }) => {
         polygons = [coordinates[0]]
       }
     } else if (filter === 'min') {
-      if ((coordinates[0].length < polygons[0]?.length ?? 0) || polygons.length === 0) {
+      if (coordinates[0].length < (polygons[0]?.length ?? 0) || polygons.length === 0) {
         polygons = [coordinates[0]]
       }
     }

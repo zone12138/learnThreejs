@@ -2,8 +2,11 @@ import { Vector3, MeshBasicMaterial, PlaneGeometry, Mesh } from 'three'
 import merge from 'lodash-es/merge'
 import { getV3Position } from '../utils/index.js'
 
-/** @type {import('../types').PlaneOpts} */
-const PLANE_DEFAULT_OPTS = {
+/**
+ * 默认配置工厂：材质 / Vector3 每次新生成，避免跨实例共享。
+ * @returns {import('../types').PlaneOpts}
+ */
+const createPlaneDefaultOpts = () => ({
   width: 10,
   scale: 1,
   position: new Vector3(0, 0, 0),
@@ -16,17 +19,18 @@ const PLANE_DEFAULT_OPTS = {
   }),
   renderOrder: 0,
   autoAddToScene: true,
-}
+})
 
 export class Plane extends Mesh {
   #opts = {}
   /**
-   * 
-   * @param {*} param0 时钟对象
+   * 平面组件
+   * @param {Object} basic - BasicThreejs 实例（依赖其 scene / tickClock）
    * @param {import('../types').PlaneOpts} opts 配置项
    */
-  constructor({ scene, tickClock }, opts = {}) {
-    const mergedOpts = merge({}, PLANE_DEFAULT_OPTS, opts)
+  constructor(basic, opts = {}) {
+    const { scene, tickClock } = basic ?? {}
+    const mergedOpts = merge({}, createPlaneDefaultOpts(), opts)
     super(new PlaneGeometry(mergedOpts.width, mergedOpts.width), mergedOpts.material)
     this.#opts = mergedOpts
     this.renderOrder = mergedOpts.renderOrder

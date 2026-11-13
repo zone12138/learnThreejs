@@ -5,15 +5,15 @@ export interface PlaneOpts {
   /**
    * 宽度
    */
-  width: number,
+  width: number
   /**
    * 高度
    */
-  height: number,
+  height: number
   /**
    * 缩放比例
    */
-  scale: number,
+  scale: number
   /**
    * 位置
    * @example
@@ -21,25 +21,25 @@ export interface PlaneOpts {
    * - new Vector3(0, 0, 0)
    * - { x: 0, y: 0, z: 0 }
    */
-  position: Vector3LikeOrTuple,
+  position: Vector3LikeOrTuple
   /**
    * 是否自动旋转
    */
-  autoRotate: boolean,
+  autoRotate: boolean
   /**
    * 旋转速度
    */
-  rotateSpeed: number,
+  rotateSpeed: number
   /**
    * 材质
    */
-  material: Material,
+  material: Material
   /**
    * 渲染顺序
    */
-  renderOrder: number,
+  renderOrder: number
   /**
    * 是否自动添加到场景
    */
-  autoAddToScene: boolean,
+  autoAddToScene: boolean
 }

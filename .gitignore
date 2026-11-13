@@ -34,3 +34,9 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# WorkBuddy 工作区数据（记忆 / 日志），不属于项目代码
+.workbuddy/
+
+# 本项目用 pnpm，避免 npx/npm 生成的锁文件混进仓库
+package-lock.json

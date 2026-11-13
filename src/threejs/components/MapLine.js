@@ -12,9 +12,9 @@ const MAPLINE_DEFAULT_OPTS = {
 
 export class MapLine extends LineSegments {
   /**
-   * 
-   * @param {*} param0 
-   * @param {import('three').LineBasicMaterialParameters} opts 
+   *
+   * @param {*} param0
+   * @param {import('three').LineBasicMaterialParameters} opts
    */
   constructor({ coordinates }, opts = {}) {
     const mergedOpts = merge({}, MAPLINE_DEFAULT_OPTS, opts)

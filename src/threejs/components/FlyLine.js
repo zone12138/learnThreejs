@@ -20,6 +20,7 @@ import merge from 'lodash-es/merge'
 export class FlyLine {
   /**
    * 构造函数
+   * @param {Object} basic - BasicThreejs 实例（依赖其 tickClock）
    * @param {Object} options - 配置选项
    * @param {Vector3} options.start - 起点位置
    * @param {Vector3} options.end - 终点位置
@@ -30,8 +31,9 @@ export class FlyLine {
    * @param {number} [options.length=0.3] - 流动光带长度
    * @param {number} [options.curveSegments=64] - 曲线分段数
    */
-  constructor({ tickClock }, options = {}) {
-    // 默认配置
+  constructor(basic, options = {}) {
+    const { tickClock } = basic ?? {}
+    // 默认配置（构造内创建，避免跨实例共享）
     const defaultOptions = {
       start: new Vector3(0, 0, 0),
       end: new Vector3(10, 0, 10),

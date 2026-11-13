@@ -1,12 +1,19 @@
 import { Mesh, Vector3, Group, Object3D, Shape, ShapeGeometry, MeshBasicMaterial } from 'three'
 import merge from 'lodash-es/merge'
-import { MapLabel, MapLine, FlowLineGroup } from './index.js'
+import { MapLine } from './MapLine.js'
+import { MapLabel } from './MapLabel.js'
+import { FlowLineGroup } from './FlowLineGroup.js'
 import { getV3Position, changeMeshMaterial } from '../utils/index.js'
-import { getMercatorProjection, getFeatureCenter, bindEvents } from '../libs/index.js'
+import { getMercatorProjection, getFeatureCenter, bindEvents } from '../libs/index'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 const NAME = 'Map2D' // 地图2D组件名称
-const MAP2D_DEFAULT_OPTS = {
+
+/**
+ * 默认配置工厂：材质每次新生成，避免跨实例共享导致高亮互相污染。
+ * @returns {import('../types').Map2DOpts}
+ */
+const createMap2DDefaultOpts = () => ({
   position: new Vector3(0, 0, 0), // 地图2D位置
   projection: {
     center: [0, 0],
@@ -14,10 +21,10 @@ const MAP2D_DEFAULT_OPTS = {
     translate: [0, 0],
   },
   renderOrder: 2, // 地图2D渲染顺序，用于解决渲染顺序问题，数值越大越靠前渲染
-  material: new MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 1 }), // 地图2D材质，用于渲染地图2D元素
+  material: new MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 1 }), // 地图2D材质
   highLight: true, // 是否显示地图2D元素的高亮效果
-  highLightMaterial: new MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }), // 地图2D元素的高亮材质，用于渲染地图2D元素的高亮效果
-  data: null, // 地图2D元素的数据，用于存储地图2D元素的相关信息
+  highLightMaterial: new MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }), // 高亮材质
+  data: null, // 地图2D元素的数据
   autoAddToScene: true, // 是否自动添加到场景中
   mergeAll: true, // 是否合并所有地图2D元素【合并所有区域，不拥有交互功能】
   mapLine: {
@@ -34,23 +41,30 @@ const MAP2D_DEFAULT_OPTS = {
     opts: {}, // 流水线选项
   },
   eventList: [], // 事件监听
-}
+})
 
+/**
+ * 地图2D组件
+ * 构造后通过 `.instance`(主Group) / `.lineGroup` / `.labelGroup` / `.flowLineGroup` 访问内部对象。
+ */
 export class Map2D {
-  constructor({ scene, interactionManager = null, tickClock = null }, opts = {}) {
-    this.scene = scene
-    this.interactionManager = interactionManager
-    this.tickClock = tickClock
-    this.opts = merge({}, MAP2D_DEFAULT_OPTS, opts)
+  /**
+   * @param {Object} basic - BasicThreejs 实例（依赖其 scene / interactionManager / tickClock）
+   * @param {import('../types').Map2DOpts} opts 配置项
+   */
+  constructor(basic, opts = {}) {
+    this.scene = basic?.scene
+    this.interactionManager = basic?.interactionManager ?? null
+    this.tickClock = basic?.tickClock ?? null
+    this.opts = merge({}, createMap2DDefaultOpts(), opts)
     this.init()
-
-    return {
-      instance: this.group,
-      labelGroup: this.labelGroup ?? null,
-      lineGroup: this.lineGroup ?? null,
-      flowLineGroup: this.flowLineGroup ?? null,
-    }
   }
+
+  /** 主 Group（历史调用方通过 .instance 访问） */
+  get instance() {
+    return this.group
+  }
+
   init() {
     const { projection, position, renderOrder, mapLabel, mapLine, flowLine, autoAddToScene } =
       this.opts

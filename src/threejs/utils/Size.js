@@ -1,13 +1,26 @@
 import { EventEmitter, bindEvents } from '../libs/index'
 
+/**
+ * 尺寸监听：优先用 ResizeObserver 监听容器（分栏/面板折叠等非窗口级变化也能响应），
+ * 降级为 window resize。读取 canvas 父容器尺寸作为渲染尺寸。
+ */
 export class Size extends EventEmitter {
   constructor({ canvas }) {
     super()
     this.canvas = canvas
     this.init()
+
     this.unbindResize = bindEvents(window, 'resize', () => {
       this.windowResize()
     })
+
+    this.observer = null
+    if (typeof ResizeObserver !== 'undefined' && canvas?.parentElement) {
+      this.observer = new ResizeObserver(() => {
+        this.windowResize()
+      })
+      this.observer.observe(canvas.parentElement)
+    }
   }
   init() {
     this.width = this.canvas.parentElement.offsetWidth
@@ -17,7 +30,12 @@ export class Size extends EventEmitter {
     this.pixelRatio = Math.min(devicePixelRatio, 2)
   }
   windowResize() {
-    this.init()
+    const width = this.canvas.parentElement.offsetWidth
+    const height = this.canvas.parentElement.offsetHeight
+    // 尺寸未变化时跳过，避免 ResizeObserver 重复触发
+    if (width === this.width && height === this.height) return
+    this.width = width
+    this.height = height
     this.emit('resize', { width: this.width, height: this.height, pixelRatio: this.pixelRatio })
   }
   onResize(callback) {
@@ -26,5 +44,7 @@ export class Size extends EventEmitter {
   destroy() {
     this.off('resize')
     this.unbindResize?.()
+    this.observer?.disconnect()
+    this.observer = null
   }
 }

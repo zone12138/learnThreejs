@@ -22,7 +22,6 @@ const REFLECTOR_DEFAULT_OPTS = {
 }
 
 export class ReflectTexture extends Mesh {
-  #opts = {}
   /**
    * 反射纹理选项
    * @param {import('../types').ReflectTextureOpts} opts - 反射纹理选项
@@ -87,6 +86,5 @@ export class ReflectTexture extends Mesh {
       alphaTest: 0.05,
     })
     super(geometry, material)
-    this.#opts = mergedOpts
   }
 }

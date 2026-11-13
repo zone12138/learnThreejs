@@ -1,7 +1,7 @@
 import { Group, Vector3 } from 'three'
 import merge from 'lodash-es/merge'
-import { FlowLine } from './index'
-import { getUnion, getMercatorProjection, getFeatureCoordinates } from '../libs/index.js'
+import { FlowLine } from './FlowLine.js'
+import { getMercatorProjection, getFeatureCoordinates } from '../libs/index.js'
 
 /** @type {import('../types').FlowLineGroupOpts} */
 const FLG_DEFAULT_OPTS = {
@@ -44,11 +44,6 @@ export class FlowLineGroup extends Group {
     const { data, projection, filter, depth, flowLineOpts } = opts
     if (!data) return console.warn('data is null, create flow line group failed')
     const mercatorProjection = getMercatorProjection(projection)
-    const outline = getUnion(data, { type: 'feature' })
-    const { geometry = {} } = outline ?? {}
-    const { coordinates = [], type } = geometry
-    let polygons = coordinates
-    if (type === 'Polygon') polygons = [coordinates]
     const polygens = getFeatureCoordinates(data, { filter })
     polygens?.forEach((polygon) => {
       // 转换坐标

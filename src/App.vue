@@ -1,8 +1,9 @@
 <script setup>
-import { shallowRef } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 const router = useRouter()
-const routes = shallowRef(router?.options?.routes || [])
+// 只渲染真实路由，跳过 redirect 占位（'/'）与 404 通配
+const routes = computed(() => (router?.options?.routes || []).filter((route) => route.component))
 </script>
 
 <template>
@@ -10,7 +11,7 @@ const routes = shallowRef(router?.options?.routes || [])
     <header>
       <nav>
         <RouterLink v-for="route in routes" :key="route.path" :to="route.path">
-          {{ route.name }}
+          {{ route.meta?.title || route.name }}
         </RouterLink>
       </nav>
     </header>

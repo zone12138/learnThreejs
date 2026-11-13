@@ -1,11 +1,19 @@
 import { Vector3, Group, MeshBasicMaterial, Shape, ExtrudeGeometry, Mesh, Object3D } from 'three'
 import merge from 'lodash-es/merge'
 import { createSideLayerMaterial, changeMeshMaterial, getV3Position } from '../utils/index.js'
-import { MapLine, MapLabel, FlowLineGroup } from './index.js'
+import { MapLine } from './MapLine.js'
+import { MapLabel } from './MapLabel.js'
+import { FlowLineGroup } from './FlowLineGroup.js'
 import { bindEvents, getFeatureCenter, getMercatorProjection } from '../libs/index'
 
 const NAME = 'Map3D' // 地图3D组件名称
-const MAP3D_DEFAULT_OPTS = {
+
+/**
+ * 默认配置工厂：材质等实例每次新生成，
+ * 避免模块级共享材质被多个 Map3D 实例共用后互相污染颜色/透明度。
+ * @returns {import('../types').Map3DOpts}
+ */
+const createMap3DDefaultOpts = () => ({
   position: new Vector3(0, 0, 0), // 地图3D位置
   projection: {
     center: [0, 0], // 地图中心坐标
@@ -51,24 +59,33 @@ const MAP3D_DEFAULT_OPTS = {
     opts: {}, // 流动线选项
   },
   eventList: [], // 事件监听
-}
+})
 
+/**
+ * 地图3D组件
+ * 构造后通过 `.instance`(主Group) / `.lineGroup` / `.labelGroup` / `.flowLineGroup` 访问内部对象。
+ */
 export class Map3D {
-  constructor({ scene, interactionManager = null, tickClock }, opts = {}) {
-    this.scene = scene
-    this.interactionManager = interactionManager
-    this.tickClock = tickClock
-    this.opts = merge({}, MAP3D_DEFAULT_OPTS, opts)
+  /**
+   * @param {Object} basic - BasicThreejs 实例（依赖其 scene / interactionManager / tickClock）
+   * @param {import('../types').Map3DOpts} opts 配置项
+   */
+  constructor(basic, opts = {}) {
+    this.scene = basic?.scene
+    this.interactionManager = basic?.interactionManager ?? null
+    this.tickClock = basic?.tickClock ?? null
+    this.opts = merge({}, createMap3DDefaultOpts(), opts)
     if (!this.opts.sideMaterial)
       this.opts.sideMaterial = createSideLayerMaterial({ depth: this.opts.extrudeOpts.depth })
 
     this.init()
-    return {
-      instance: this.group,
-      labelGroup: this.labelGroup ?? null,
-      lineGroup: this.lineGroup ?? null,
-    }
   }
+
+  /** 主 Group（历史调用方通过 .instance 访问） */
+  get instance() {
+    return this.group
+  }
+
   init() {
     const { projection, position, renderOrder, mapLabel, mapLine, flowLine, autoAddToScene } =
       this.opts

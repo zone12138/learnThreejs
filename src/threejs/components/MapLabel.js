@@ -18,8 +18,8 @@ const MAPLABEL_DEFAULT_OPTS = {
 
 export class MapLabel {
   /**
-   * 
-   * @param {*} param0 
+   *
+   * @param {*} param0
    * @param {import('../types').MapLabelOpts} opts 配置项
    */
   constructor({ name, position }, opts = {}) {

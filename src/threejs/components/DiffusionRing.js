@@ -15,10 +15,11 @@ export class DiffusionRing extends Mesh {
   #opts = {}
   /**
    * 扩散环组件
-   * @param {*} param0 时钟对象
+   * @param {Object} basic - BasicThreejs 实例（依赖其 tickClock）
    * @param {import('../types').DiffusionRingOpts} opts 配置项
    */
-  constructor({ tickClock }, opts = {}) {
+  constructor(basic, opts = {}) {
+    const { tickClock } = basic ?? {}
     const mergedOpts = merge({}, DIFFUSION_RINGING, opts)
     super(
       new PlaneGeometry(mergedOpts.radius * 2, mergedOpts.radius * 2),

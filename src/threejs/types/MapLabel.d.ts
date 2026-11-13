@@ -1,7 +1,7 @@
 export interface MapLabelOpts {
-    /**
-     * 字体大小
-     */
+  /**
+   * 字体大小
+   */
   fontSize: number
   /**
    * 字体

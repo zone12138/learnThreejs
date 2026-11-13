@@ -30,7 +30,6 @@ export class Heatmap3D extends Mesh {
   constructor(opts = {}) {
     const mergedOpts = merge({}, HEATMAP3D_DEFAULT_OPTS, opts)
     const {
-      projection,
       width,
       height,
       radius,
@@ -65,11 +64,7 @@ export class Heatmap3D extends Mesh {
       data,
     })
 
-    console.log(heatmapInstance, data)
-
     const heatmapCanvas = heatmapContainer.querySelector('canvas')
-    const heatmapDataURL = heatmapCanvas.toDataURL()
-    console.log(heatmapDataURL)
     const texture = new CanvasTexture(heatmapCanvas)
     texture.needsUpdate = true
 

@@ -1,11 +1,11 @@
 <!--
- * @FileDescription: 
+ * @FileDescription: 首页演示（Grid + Plane + Map3D（广东） + Map2D（中国省级底图））
  * @Date: 2026-01-19 14:37:11
 -->
 <template>
-  <div class="map-container">
+  <div class="demo-stage">
     <canvas ref="mapCanvas"></canvas>
-    <button @click="cleanup">cleanup</button>
+    <button class="demo-reset-btn" @click="cleanup">cleanup</button>
   </div>
 </template>
 
@@ -18,35 +18,37 @@ import {
   AdditiveBlending,
   Vector3,
   AxesHelper,
-  Group,
 } from 'three'
 import gsap from 'gsap'
 import { BasicThreejs } from '@/threejs/core'
-import { Grid, Map3D, Plane, Map2D } from '@/threejs/components/index'
-import { Grid_O } from '@/threejs/components/Grid_Old'
-import { changeMeshMaterial } from '@/threejs/utils/index'
+import { Grid, Map3D, Map2D, Plane } from '@/threejs/components/index'
+import { PROJECTION } from '@/threejs/config/geo'
+import { loadGeoJson } from '@/utils/geoLoader'
 import image1 from '@/assets/textures/image.png'
-import map1Data from '@/geoJson/广东省.json'
-import mapChinaData from '@/geoJson/中华人民共和国（省）.json'
 
 const mapCanvas = ref(null)
 let map = null,
-  loader = new TextureLoader()
-onMounted(() => {
+  loader = new TextureLoader(),
+  tl = null
+
+onMounted(async () => {
+  const [mapData, mapChinaData] = await Promise.all([
+    loadGeoJson('guangdong'),
+    loadGeoJson('china-provinces'),
+  ])
+
   map = new BasicThreejs(mapCanvas.value, {
     cameraOpts: {
       helper: true,
-      // position: new Vector3(0, 10, 12),
     },
   })
-  const grid = new Grid_O(map, {
+  new Grid(map, {
     gridSize: 50,
     gridDivision: 20,
     gridColor: 0x1b4b70,
     shapeSize: 0.5,
     shapeColor: 0x2a5f8a,
     pointSize: 0.1,
-    pointColor: 0x154d7d,
   })
   const plane1 = new Plane(map, {
     width: 10,
@@ -66,44 +68,9 @@ onMounted(() => {
   plane1.renderOrder = 6
 
   const map3D = new Map3D(map, {
-    projection: {
-      center: [113.280637, 23.125178],
-      scale: 85,
-    },
+    projection: PROJECTION.guangdong,
     position: new Vector3(0, 0.3, 0),
-    data: map1Data,
-    // highLight: false,
-    // eventList: [
-    //   {
-    //     event: 'mouseover',
-    //     callback: (e) => {
-    //       changeMeshMaterial(
-    //         e.target.parent,
-    //         {
-    //           color: 0xffffff,
-    //           transparent: true,
-    //           opacity: 0.5,
-    //         },
-    //         {
-    //           index: 0,
-    //         },
-    //       )
-    //     },
-    //   },
-    //   {
-    //     event: 'mouseout',
-    //     callback: (e) => {
-    //       changeMeshMaterial(
-    //         e.target.parent,
-    //         new MeshBasicMaterial({
-    //           color: 0x48afff,
-    //           transparent: true,
-    //           opacity: 0.4,
-    //         }),
-    //       )
-    //     },
-    //   },
-    // ],
+    data: mapData,
   })
   map3D.instance.rotation.x = -Math.PI / 2
   map3D.instance.scale.set(1, 1, 0)
@@ -111,10 +78,7 @@ onMounted(() => {
   map3D.labelGroup.visible = false
 
   const map2D = new Map2D(map, {
-    projection: {
-      center: [113.280637, 23.125178],
-      scale: 85,
-    },
+    projection: PROJECTION.guangdong,
     position: new Vector3(0, 0.31, 0),
     data: mapChinaData,
   })
@@ -123,7 +87,7 @@ onMounted(() => {
   const axesHelper = new AxesHelper(100)
   map.scene.add(axesHelper)
 
-  const tl = gsap.timeline({
+  tl = gsap.timeline({
     defaults: {
       duration: 2.5,
       ease: 'power2.out',
@@ -151,7 +115,11 @@ onMounted(() => {
     },
   })
 })
+
 onUnmounted(() => {
+  // 入场动画必须先终止，避免 destroy 后继续驱动已销毁的相机/缩放对象
+  tl?.kill()
+  tl = null
   map?.destroy()
 })
 
@@ -159,16 +127,3 @@ const cleanup = () => {
   map?.destroy()
 }
 </script>
-
-<style scoped>
-.map-container {
-  width: 100%;
-  height: 100%;
-}
-
-button {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-}
-</style>

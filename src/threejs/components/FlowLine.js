@@ -38,11 +38,12 @@ export class FlowLine extends Mesh {
   /** @type {import('../types').FlowLineOpts} */
   #opts = {}
   /**
-   *
-   * @param {*} param0 时钟对象
+   * 流光线段组件
+   * @param {Object} basic - BasicThreejs 实例（依赖其 tickClock）
    * @param {import('../types').FlowLineOpts} opts 配置项
    */
-  constructor({ tickClock }, opts = {}) {
+  constructor(basic, opts = {}) {
+    const { tickClock } = basic ?? {}
     const mergedOpts = merge({}, FLOW_LINE_DEFAULT_OPTS, opts)
     super(FlowLine.#createGeometry(mergedOpts), FlowLine.#createMaterial(mergedOpts))
     this.#opts = mergedOpts
@@ -60,7 +61,6 @@ export class FlowLine extends Mesh {
   static #createGeometry(opts) {
     const { points, tubularSegments, radius, radiusSegments, closed } = opts
     const path = new CatmullRomCurve3(points)
-    console.log(path.getLength())
     return new TubeGeometry(path, tubularSegments, radius, radiusSegments, closed)
   }
   /**
