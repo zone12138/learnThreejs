@@ -76,6 +76,12 @@ const FLOW_FRAGMENT = /* glsl */ `
 
     // 纯加色：alpha 不参与混合，亮度直接叠加，头部自然过曝
     gl_FragColor = vec4(color * intensity * uOpacity, 1.0);
+
+    // ShaderMaterial 不会自动做输出色彩空间转换（内建材质才有）。
+    // 少了这一步，着色器算出的线性亮度会被当成 sRGB 直接写进画面，
+    // 0.22 的常亮链路实际只剩约 0.04 的观感亮度，叠在深色板块上几乎不可见 ——
+    // 整条线看起来只剩过曝的彗星头，其余部分"消失"。加上后 base 才会正常显示成一条青线。
+    #include <colorspace_fragment>
   }
 `
 
@@ -150,9 +156,10 @@ export class FlyLineFlow {
    * @param {Object} params
    * @param {import('three').Scene} params.scene 场景
    * @param {number[]} [params.colors] 飞线配色
-   * @param {number} [params.maxRoutes] 最多绘制多少条线
+   * @param {number} [params.maxRoutes] 最多绘制多少条线，默认不限制
+   *   （曾经写死 20，导致 21 个地级市里排在最后的云浮市永远没有飞线）
    */
-  constructor({ scene, colors = DEFAULT_ROUTE_COLORS, maxRoutes = 20 } = {}) {
+  constructor({ scene, colors = DEFAULT_ROUTE_COLORS, maxRoutes = Infinity } = {}) {
     this.#scene = scene
     this.#colors = colors
     this.#maxRoutes = maxRoutes
@@ -199,6 +206,7 @@ export class FlyLineFlow {
         new TubeGeometry(curve, 128, tubeRadius, 8, false),
         this.#createFlowMaterial(color),
       )
+      tube.renderOrder = 10
       group.add(tube)
 
       const head = new Sprite(
@@ -209,9 +217,11 @@ export class FlyLineFlow {
           opacity: 0.9,
           blending: AdditiveBlending,
           depthWrite: false,
+          depthTest: false,
         }),
       )
       head.scale.setScalar(headSize)
+      head.renderOrder = 10
       group.add(head)
 
       this.#items.push({
@@ -233,10 +243,12 @@ export class FlyLineFlow {
           opacity: 0.85,
           blending: AdditiveBlending,
           depthWrite: false,
+          depthTest: false,
         }),
       )
       dot.position.copy(node.position)
       dot.scale.setScalar(dotSize)
+      dot.renderOrder = 10
       group.add(dot)
 
       const ring = new Mesh(
@@ -248,12 +260,14 @@ export class FlyLineFlow {
           opacity: 0.4,
           blending: AdditiveBlending,
           depthWrite: false,
+          depthTest: false,
           side: DoubleSide,
         }),
       )
       ring.rotation.x = -Math.PI / 2
       ring.position.copy(node.position)
       ring.scale.setScalar(ringSize)
+      ring.renderOrder = 10
       group.add(ring)
 
       this.#pulses.push({ ring, phase: index / nodes.length, baseScale: ringSize })
@@ -333,6 +347,10 @@ export class FlyLineFlow {
       fragmentShader: FLOW_FRAGMENT,
       transparent: true,
       depthWrite: false,
+      // 发光叠加物必须跳过深度测试：板块材质透明但 depthWrite 为 true（默认），
+      // 相机压低到接近板面时，近侧板块的深度会整段吃掉远处的飞线，
+      // 表现为「换个方位看飞线就消失了」。配合 renderOrder 让飞线永远最后画。
+      depthTest: false,
       blending: CustomBlending,
       blendEquation: AddEquation,
       blendSrc: OneFactor,
